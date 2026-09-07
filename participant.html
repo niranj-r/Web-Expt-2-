@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Participants | Hash'26</title>
+
+    <link rel="stylesheet" href="./css/style.css">
+    <script src="./script/scripts.js"></script>
+    <script defer src="js/app.js"></script>
+    <script defer src="js/gallery.js"></script>
+
+</head>
+
+
+<body>
+
+    <!-- ================= NAVIGATION ================= -->
+
+    <header class="main-navigation">
+        <div class="container">
+            <a href="index.html" class="brand-logo">
+                <img src="images/logo.svg" alt="Hash'26 Logo" width="120" height="30">
+            </a>
+            <nav>
+                <ul class="nav-menu">
+                    <li><a href="index.html" class="nav-item">Home</a></li>
+                    <li><a href="events.html" class="nav-item">Events</a></li>
+                    <li><a href="gallery.html" class="nav-item">Gallery</a></li>
+                    <li><a href="contact.html" class="nav-item">Contact</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+
+    <!-- ================= HEADER ================= -->
+
+    <header class="registration-header">
+
+        <div class="container">
+
+            <h1>
+                PARTICIPANTS
+            </h1>
+
+            <p>
+                Registered Hash'26 participants
+            </p>
+
+        </div>
+
+    </header>
+
+
+    <!-- ================= PARTICIPANTS ================= -->
+
+    <section class="page-section">
+
+        <div class="container">
+
+            <h2>
+                REGISTERED PARTICIPANTS
+            </h2>
+
+
+            <div class="input-field-group">
+
+                <label for="participantSearch">
+                    Search Participants
+                </label>
+
+                <input type="search" id="participantSearch" class="form-input"
+                    placeholder="Search by name, email or college...">
+
+            </div>
+
+
+            <div class="participant-table-wrapper">
+
+                <table class="participant-table" id="participantDataTable">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>Name</th>
+
+                            <th>Email</th>
+
+                            <th>Phone</th>
+
+                            <th>DOB</th>
+
+                            <th>Gender</th>
+
+                            <th>College</th>
+
+                            <th>Department</th>
+
+                            <th>Year</th>
+
+                            <th>Events</th>
+
+                            <th>Actions</th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody id="participantTable">
+
+                        <!-- JavaScript adds participants -->
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+
+            <br>
+
+
+            <a href="register.html" class="register-button">
+                ← BACK TO REGISTRATION
+            </a>
+
+        </div>
+
+    </section>
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-layout">
+        <div class="footer-brand">
+          <h2>HASH'26</h2>
+          <p>
+            The definitive experimental technology festival.<br>
+            Build. Break. Create.<br>
+            Hosted by CSE department of MBCET.
+          </p>
+        </div>
+
+        <nav class="footer-links">
+          <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="events.html">Events</a></li>
+            <li><a href="gallery.html">Gallery</a></li>
+            <li><a href="register.html">Register</a></li>
+            <li><a href="contact.html">Contact</a></li>
+            <li><a href="participant.html">Participants</a></li>
+          </ul>
+        </nav>
+        <div class="footer-contact">
+          <h3>LOCATION</h3>
+          <p>
+            B Block<br>
+            MBCET<br>
+            Trivandrum.
+          </p>
+        </div>
+      </div>
+      <div class="footer-legal">
+        &copy; 2026 Hash'26 Organizing Committee. Designed & Developed by NJAI
+      </div>
+    </div>
+  </footer>
+  <script src="script.js"></script>
+</body>
+</html>

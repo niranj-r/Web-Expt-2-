@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Organizer Dashboard - Hash'26</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .dashboard-container {
+      background: linear-gradient(135deg, var(--bg-secondary) 0%, #dcdce0 100%);
+      min-height: calc(100vh - 80px);
+      padding: 40px 0;
+    }
+
+    .dashboard-header {
+      background: linear-gradient(135deg, var(--dark-primary) 0%, var(--dark-secondary) 100%);
+      color: white;
+      padding: 40px 0;
+      margin-bottom: 40px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .dashboard-header h1 {
+      color: var(--highlight);
+      margin-bottom: 8px;
+      font-size: 32px;
+      letter-spacing: 1px;
+    }
+
+    .dashboard-header p {
+      opacity: 0.95;
+      font-size: 16px;
+      font-weight: 500;
+    }
+
+    .dashboard-content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      margin-bottom: 40px;
+    }
+
+    .dashboard-section {
+      background: white;
+      padding: 35px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      border-top: 4px solid var(--highlight);
+      transition: all 0.3s ease;
+    }
+
+    .dashboard-section:hover {
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+    }
+
+    .dashboard-section h2 {
+      color: var(--dark-primary);
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 3px solid var(--highlight);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 20px;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .stat-box {
+      background: linear-gradient(135deg, var(--highlight) 0%, #FF6B35 100%);
+      color: white;
+      padding: 25px 20px;
+      border-radius: 10px;
+      margin-top: 15px;
+      margin-bottom: 25px;
+      text-align: center;
+      box-shadow: 0 4px 15px rgba(237, 75, 0, 0.2);
+      transition: transform 0.3s ease;
+    }
+
+    .stat-box:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 20px rgba(237, 75, 0, 0.3);
+    }
+
+    .stat-number {
+      font-size: 42px;
+      font-weight: 900;
+      margin: 12px 0;
+      letter-spacing: -1px;
+    }
+
+    .stat-label {
+      font-size: 14px;
+      opacity: 0.95;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .search-box {
+      width: 100%;
+      padding: 14px 16px;
+      margin-bottom: 20px;
+      border: 2px solid #e0e0e0;
+      border-radius: 6px;
+      font-size: 15px;
+      transition: all 0.3s ease;
+      background: #fafafa;
+    }
+
+    .search-box::placeholder {
+      color: #999;
+    }
+
+    .search-box:hover {
+      border-color: #d0d0d0;
+      background: white;
+    }
+
+    .search-box:focus {
+      outline: none;
+      border-color: var(--highlight);
+      background: white;
+      box-shadow: 0 0 0 4px rgba(237, 75, 0, 0.08);
+    }
+
+    .task-input-group {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .task-input-group input {
+      flex: 1;
+      padding: 14px 16px;
+      border: 2px solid #e0e0e0;
+      border-radius: 6px;
+      font-size: 15px;
+      font-family: var(--font-primary);
+      transition: all 0.3s ease;
+      background: #fafafa;
+    }
+
+    .task-input-group input:hover {
+      border-color: #d0d0d0;
+      background: white;
+    }
+
+    .task-input-group input:focus {
+      outline: none;
+      border-color: var(--highlight);
+      background: white;
+      box-shadow: 0 0 0 4px rgba(237, 75, 0, 0.08);
+    }
+
+    .task-input-group button {
+      padding: 14px 24px;
+      background: linear-gradient(135deg, var(--highlight) 0%, #FF6B35 100%);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-size: 14px;
+      box-shadow: 0 4px 15px rgba(237, 75, 0, 0.2);
+      white-space: nowrap;
+    }
+
+    .task-input-group button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(237, 75, 0, 0.3);
+    }
+
+    .task-input-group button:active {
+      transform: translateY(0);
+    }
+
+    .btn-clear-all {
+      background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+      color: white;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      box-shadow: 0 2px 8px rgba(220, 53, 69, 0.2);
+      white-space: nowrap;
+    }
+
+    .btn-clear-all:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+    }
+
+    .btn-clear-all:active {
+      transform: translateY(0);
+    }
+
+    .tasks-list {
+      max-height: 450px;
+      overflow-y: auto;
+      padding-right: 5px;
+    }
+
+    .tasks-list::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .tasks-list::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 10px;
+    }
+
+    .tasks-list::-webkit-scrollbar-thumb {
+      background: var(--highlight);
+      border-radius: 10px;
+    }
+
+    .tasks-list::-webkit-scrollbar-thumb:hover {
+      background: #FF6B35;
+    }
+
+    @media (max-width: 1200px) {
+      .dashboard-content {
+        grid-template-columns: 1fr;
+        gap: 30px;
+      }
+    }
+
+    .logout-section {
+      text-align: right;
+      padding-top: 25px;
+      border-top: 2px solid #e0e0e0;
+      margin-top: 15px;
+    }
+
+    .btn-logout {
+      background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+      color: white;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 14px;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      box-shadow: 0 2px 8px rgba(220, 53, 69, 0.2);
+    }
+
+    .btn-logout:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+    }
+
+    .btn-logout:active {
+      transform: translateY(0);
+    }
+
+    .participants-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .participants-header h2 {
+      margin: 0;
+      padding-bottom: 0;
+      border: none;
+      flex: 1;
+    }
+  </style>
+</head>
+
+<body style="background-color: var(--bg-secondary);">
+
+  <header class="main-navigation">
+    <div class="container">
+      <a href="index.html" class="brand-logo">
+        <img src="images/logo.svg" alt="Hash'26 Logo" width="120" height="30">
+      </a>
+      <nav>
+        <ul class="nav-menu">
+          <li><a href="index.html" class="nav-item">Home</a></li>
+          <li><a href="events.html" class="nav-item">Events</a></li>
+          <li><a href="gallery.html" class="nav-item">Gallery</a></li>
+          <li><a href="contact.html" class="nav-item">Contact</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="dashboard-header">
+      <div class="container">
+        <h1>ORGANIZER DASHBOARD</h1>
+        <p>Manage Hash'26 participants and tasks</p>
+      </div>
+    </div>
+
+    <div class="container dashboard-container">
+      <div class="dashboard-content">
+        <!-- Participants Section -->
+        <div class="dashboard-section">
+          <div class="participants-header">
+            <h2>Participants</h2>
+            <button class="btn-clear-all" onclick="clearAllParticipants()">Clear All</button>
+          </div>
+
+          <div class="stat-box">
+            <div class="stat-label">Total Registered</div>
+            <div class="stat-number" id="totalParticipants">0</div>
+          </div>
+
+          <input type="text" id="participantSearchInput" class="search-box" 
+                 placeholder="Search by name, email, or ID...">
+
+          <div id="participantsList">
+            <p style="text-align: center; padding: 20px; color: #666;">Loading participants...</p>
+          </div>
+        </div>
+
+        <!-- Task Manager Section -->
+        <div class="dashboard-section">
+          <h2>Task Manager</h2>
+
+          <div class="task-input-group">
+            <input type="text" id="taskInput" placeholder="Enter a new task...">
+            <button id="addTaskBtn">Add Task</button>
+          </div>
+
+          <div class="tasks-list" id="tasksList">
+            <p style="text-align: center; padding: 20px; color: #666;">Loading tasks...</p>
+          </div>
+
+          <div class="logout-section">
+            <button class="btn-logout" id="logoutBtn">Logout</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-layout">
+        <div class="footer-brand">
+          <h2>HASH'26</h2>
+          <p>
+            The definitive experimental technology festival.<br>
+            Build. Break. Create.<br>
+            Hosted by CSE department of MBCET.
+          </p>
+        </div>
+
+        <nav class="footer-links">
+          <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="events.html">Events</a></li>
+            <li><a href="gallery.html">Gallery</a></li>
+            <li><a href="register.html">Register</a></li>
+            <li><a href="contact.html">Contact</a></li>
+            <li><a href="organizer-login.html">Organizer</a></li>
+          </ul>
+        </nav>
+
+        <div class="footer-contact">
+          <h3>LOCATION</h3>
+          <p>
+            B Block<br>
+            MBCET<br>
+            Trivandrum.
+          </p>
+        </div>
+      </div>
+
+      <div class="footer-legal">
+        &copy; 2026 Hash'26 Organizing Committee. Designed & Developed by NJAI
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/organizer.js"></script>
+
+</body>
+
+</html>

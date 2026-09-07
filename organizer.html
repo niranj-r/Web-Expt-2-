@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Organizer Login - Hash'26</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    body {
+      background: linear-gradient(135deg, var(--bg-secondary) 0%, #dcdce0 100%);
+      min-height: 100vh;
+    }
+
+    .login-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: calc(100vh - 80px);
+      padding: 40px 20px;
+    }
+
+    .login-box {
+      background: white;
+      padding: 50px 40px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+      max-width: 420px;
+      width: 100%;
+      border-top: 4px solid var(--highlight);
+    }
+
+    .login-box h1 {
+      text-align: center;
+      color: var(--dark-primary);
+      margin-bottom: 5px;
+      font-size: 28px;
+      letter-spacing: 1px;
+    }
+
+    .login-box p {
+      text-align: center;
+      color: #888;
+      margin-bottom: 35px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .login-form {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .form-group label {
+      font-weight: 700;
+      color: var(--dark-primary);
+      margin-bottom: 8px;
+      font-size: 15px;
+    }
+
+    .form-group input {
+      padding: 14px 16px;
+      border: 2px solid #e0e0e0;
+      font-size: 15px;
+      font-family: var(--font-primary);
+      transition: all 0.3s ease;
+      background: #fafafa;
+    }
+
+    .form-group input:hover {
+      border-color: #d0d0d0;
+      background: white;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: var(--highlight);
+      background: white;
+      box-shadow: 0 0 0 4px rgba(237, 75, 0, 0.08);
+    }
+
+    .form-group input.error {
+      border-color: #dc3545;
+      background: #fff5f5;
+    }
+
+    .form-group input.error:focus {
+      box-shadow: 0 0 0 4px rgba(220, 53, 69, 0.08);
+    }
+
+    .error-message {
+      color: #dc3545;
+      font-size: 13px;
+      margin-top: 6px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .login-button {
+      padding: 14px 20px;
+      background: linear-gradient(135deg, var(--highlight) 0%, #FF6B35 100%);
+      color: white;
+      border: none;
+      font-weight: 700;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 10px;
+      box-shadow: 0 4px 15px rgba(237, 75, 0, 0.3);
+    }
+
+    .login-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(237, 75, 0, 0.4);
+    }
+
+    .login-button:active {
+      transform: translateY(0);
+    }
+
+    .login-info {
+      margin-top: 35px;
+      padding: 20px;
+      background: linear-gradient(135deg, #f0f8ff 0%, #f5f5f5 100%);
+      border-left: 4px solid var(--highlight);
+    }
+
+    .login-info h3 {
+      color: var(--dark-primary);
+      margin-bottom: 12px;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .login-info p {
+      color: #555;
+      font-size: 14px;
+      margin: 6px 0;
+      text-align: left;
+      font-family: 'Courier New', monospace;
+      background: white;
+      padding: 8px 12px;
+      margin-bottom: 8px;
+    }
+
+    .login-info p strong {
+      color: var(--highlight);
+      font-weight: 700;
+    }
+
+    .back-link {
+      text-align: center;
+      margin-top: 25px;
+    }
+
+    .back-link a {
+      color: var(--highlight);
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+    }
+
+    .back-link a:hover {
+      color: var(--dark-primary);
+      gap: 10px;
+    }
+
+    .back-link a::before {
+      content: "←";
+    }
+
+    @media (max-width: 480px) {
+      .login-box {
+        padding: 35px 25px;
+      }
+
+      .login-box h1 {
+        font-size: 24px;
+      }
+
+      .login-info {
+        margin-top: 25px;
+        padding: 15px;
+      }
+    }
+  </style>
+</head>
+
+<body style="background-color: var(--bg-secondary);">
+
+  <header class="main-navigation">
+    <div class="container">
+      <a href="index.html" class="brand-logo">
+        <img src="images/logo.svg" alt="Hash'26 Logo" width="120" height="30">
+      </a>
+      <nav>
+        <ul class="nav-menu">
+          <li><a href="index.html" class="nav-item">Home</a></li>
+          <li><a href="events.html" class="nav-item">Events</a></li>
+          <li><a href="gallery.html" class="nav-item">Gallery</a></li>
+          <li><a href="contact.html" class="nav-item">Contact</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="login-container">
+      <div class="login-box">
+        <h1>ORGANIZER LOGIN</h1>
+        <p>Manage Hash'26 events and participants</p>
+
+        <form class="login-form" id="organizerLoginForm">
+          <div class="form-group">
+            <label for="username">Username / Email</label>
+            <input type="text" id="username" name="username" placeholder="Enter username or email" required>
+            <span class="error-message" id="usernameError"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" placeholder="Enter password" required>
+            <span class="error-message" id="passwordError"></span>
+          </div>
+
+          <button type="submit" class="login-button">LOGIN</button>
+
+          <div class="error-message" id="loginError" style="text-align: center;"></div>
+        </form>
+
+        <!--<div class="login-info">
+          <h3>Demo Credentials:</h3>
+          <p><strong>Username:</strong> organizer</p>
+          <p><strong>Password:</strong> techfest2026</p>
+        </div>!-->
+
+        <div class="back-link">
+          <a href="index.html">Back to Home</a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-layout">
+        <div class="footer-brand">
+          <h2>HASH'26</h2>
+          <p>
+            The definitive experimental technology festival.<br>
+            Build. Break. Create.<br>
+            Hosted by CSE department of MBCET.
+          </p>
+        </div>
+
+        <nav class="footer-links">
+          <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="events.html">Events</a></li>
+            <li><a href="gallery.html">Gallery</a></li>
+            <li><a href="register.html">Register</a></li>
+            <li><a href="contact.html">Contact</a></li>
+            <li><a href="organizer-login.html">Organizer</a></li>
+          </ul>
+        </nav>
+
+        <div class="footer-contact">
+          <h3>LOCATION</h3>
+          <p>
+            B Block<br>
+            MBCET<br>
+            Trivandrum.
+          </p>
+        </div>
+      </div>
+
+      <div class="footer-legal">
+        &copy; 2026 Hash'26 Organizing Committee. Designed & Developed by NJAI
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Simple organizer login
+    const form = document.getElementById("organizerLoginForm");
+    const usernameInput = document.getElementById("username");
+    const passwordInput = document.getElementById("password");
+    const loginError = document.getElementById("loginError");
+    const usernameError = document.getElementById("usernameError");
+    const passwordError = document.getElementById("passwordError");
+
+    // Demo credentials
+    const VALID_USERNAME = "organizer";
+    const VALID_PASSWORD = "techfest2026";
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      // Clear previous errors
+      loginError.textContent = "";
+      usernameError.textContent = "";
+      passwordError.textContent = "";
+      usernameInput.classList.remove("error");
+      passwordInput.classList.remove("error");
+
+      const username = usernameInput.value.trim();
+      const password = passwordInput.value.trim();
+
+      let isValid = true;
+
+      // Validate username
+      if (username === "") {
+        usernameError.textContent = "Username is required.";
+        usernameInput.classList.add("error");
+        isValid = false;
+      }
+
+      // Validate password
+      if (password === "") {
+        passwordError.textContent = "Password is required.";
+        passwordInput.classList.add("error");
+        isValid = false;
+      }
+
+      if (!isValid) return;
+
+      // Check credentials
+      if (username === VALID_USERNAME && password === VALID_PASSWORD) {
+        localStorage.setItem("organizerLoggedIn", "true");
+        localStorage.setItem("organizerUsername", username);
+        alert("Login successful! Redirecting to dashboard...");
+        window.location.href = "organizer-dashboard.html";
+      } else {
+        loginError.textContent = "⚠ Invalid username or password.";
+        if (username !== VALID_USERNAME) {
+          usernameInput.classList.add("error");
+        }
+        if (password !== VALID_PASSWORD) {
+          passwordInput.classList.add("error");
+        }
+      }
+    });
+
+    // Clear error on input
+    usernameInput.addEventListener("input", () => {
+      usernameError.textContent = "";
+      usernameInput.classList.remove("error");
+    });
+
+    passwordInput.addEventListener("input", () => {
+      passwordError.textContent = "";
+      passwordInput.classList.remove("error");
+    });
+  </script>
+
+</body>
+
+</html>
