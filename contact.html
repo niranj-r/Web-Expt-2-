@@ -7,7 +7,6 @@
   <title>Contact - Hash'26</title>
   <link rel="stylesheet" href="css/style.css">
   <script defer src="js/app.js"></script>
-  <script defer src="js/gallery.js"></script>
 </head>
 
 <body style="background-color: var(--bg-secondary);">
@@ -22,6 +21,8 @@
           <li><a href="index.html" class="nav-item">Home</a></li>
           <li><a href="events.html" class="nav-item">Events</a></li>
           <li><a href="gallery.html" class="nav-item">Gallery</a></li>
+          <li><a href="participant.html" class="nav-item">Participants</a></li>
+          <li><a href="organizer.html" class="nav-item">Organizer</a></li>
           <li><a href="contact.html" class="nav-item">Contact</a></li>
         </ul>
       </nav>
@@ -43,10 +44,10 @@
           <div class="contact-information-group">
             <h3>FESTIVAL LOCATION</h3>
             <p class="large-text">
-              University Campus<br>
-              Block 4, Main Auditorium<br>
-              100 Brutalist Way<br>
-              Tech City, ST 12345
+              MBCET Campus<br>
+              Block B, Main Auditorium<br>
+              Brutalist Tech Way<br>
+              Trivandrum, KL 695015
             </p>
           </div>
 
@@ -54,7 +55,7 @@
             <h3>GET IN TOUCH</h3>
             <p>
               Email: <a href="mailto:info@hash26.edu">info@hash26.edu</a><br>
-              Phone: <a href="tel:+15550000000">+1 (555) 000-0000</a>
+              Phone: <a href="tel:+919876543210">+91 98765 43210</a>
             </p>
           </div>
 
@@ -79,7 +80,7 @@
 
         <div class="message-form-box">
           <h2>SEND FEEDBACK</h2>
-          <form action="#" method="POST">
+          <form action="#" method="POST" onsubmit="event.preventDefault(); alert('Thank you for your message! We will get back to you shortly.'); this.reset();">
 
             <div class="input-field-group">
               <label for="name">Name</label>
@@ -107,10 +108,6 @@
 
       </div>
 
-      <div class="location-map-frame">
-        [ GOOGLE MAPS IFRAME PLACEHOLDER ]
-      </div>
-
     </section>
   </main>
 
@@ -132,6 +129,8 @@
             <li><a href="events.html">Events</a></li>
             <li><a href="gallery.html">Gallery</a></li>
             <li><a href="register.html">Register</a></li>
+            <li><a href="participant.html">Participants</a></li>
+            <li><a href="organizer.html">Organizer</a></li>
             <li><a href="contact.html">Contact</a></li>
           </ul>
         </nav>

@@ -1,300 +1,256 @@
 // =====================================================
-// INTERACTIVE IMAGE GALLERY
+// INTERACTIVE IMAGE GALLERY WITH SLIDESHOW & FILTERS
 // =====================================================
 
 class ImageGallery {
     constructor() {
         this.currentIndex = 0;
         this.images = [];
-        this.isSlideshow = false;
-        this.slideshowInterval = null;
+        this.filteredImages = [];
+        this.isSlideshowActive = false;
+        this.slideshowTimer = null;
+        this.currentCategory = "all";
         this.init();
     }
 
     init() {
-        // Get all gallery images
-        const galleryImages = document.querySelectorAll(".artwork-card img, .exhibition-grid img");
-        
-        if (galleryImages.length === 0) return;
+        this.collectImages();
+        if (this.images.length === 0) return;
 
-        this.images = Array.from(galleryImages).map(img => ({
-            src: img.src,
-            alt: img.alt
-        }));
-
-        // Add click handlers to make images clickable
-        galleryImages.forEach((img, index) => {
-            img.style.cursor = "pointer";
-            img.addEventListener("click", () => this.openGallery(index));
-        });
-
-        // Also check for gallery thumbnails
-        const thumbnails = document.querySelectorAll(".gallery-thumbnail");
-        thumbnails.forEach((thumb, index) => {
-            thumb.addEventListener("click", () => this.openGallery(index));
-        });
-
-        // Create lightbox HTML
-        this.createLightbox();
+        this.filteredImages = [...this.images];
+        this.renderCategoryFilters();
+        this.setupImageClickHandlers();
+        this.createLightboxUI();
     }
 
-    createLightbox() {
-        const lightbox = document.createElement("div");
-        lightbox.id = "imageLightbox";
-        lightbox.innerHTML = `
-            <div class="lightbox-overlay" id="lightboxOverlay">
-                <div class="lightbox-container">
-                    <button class="lightbox-btn lightbox-prev" id="lightboxPrev">❮</button>
-                    <div class="lightbox-image-wrapper">
-                        <img id="lightboxImage" src="" alt="" class="lightbox-image">
-                        <p class="lightbox-caption" id="lightboxCaption"></p>
+    collectImages() {
+        // Collect images from gallery cards & figures
+        const galleryItems = document.querySelectorAll(".artwork-card, .exhibition-grid figure, .event-feature-card");
+        
+        let collected = [];
+
+        galleryItems.forEach((card, index) => {
+            const img = card.querySelector("img");
+            const labelEl = card.querySelector(".artwork-label, figcaption, h3");
+            if (img) {
+                const alt = img.alt || labelEl?.textContent || `Event Photograph ${index + 1}`;
+                const title = labelEl?.textContent || img.alt || `Photograph ${index + 1}`;
+                
+                // Determine category based on alt/title
+                let category = "general";
+                const text = (alt + " " + title).toLowerCase();
+                if (text.includes("hack") || text.includes("code") || text.includes("cyber") || text.includes("ctf")) {
+                    category = "hackathons";
+                } else if (text.includes("workshop") || text.includes("ux") || text.includes("design")) {
+                    category = "workshops";
+                } else if (text.includes("stage") || text.includes("award") || text.includes("ceremony") || text.includes("main")) {
+                    category = "stage";
+                }
+
+                const itemData = {
+                    src: img.src,
+                    alt: alt,
+                    title: title,
+                    category: category,
+                    element: img
+                };
+
+                collected.push(itemData);
+            }
+        });
+
+        this.images = collected;
+    }
+
+    renderCategoryFilters() {
+        const header = document.querySelector(".exhibition-header .container") || document.querySelector(".promo-media-section .container");
+        if (!header || document.getElementById("galleryCategoryFilters")) return;
+
+        const filterContainer = document.createElement("div");
+        filterContainer.id = "galleryCategoryFilters";
+        filterContainer.style.cssText = `
+            display: flex;
+            gap: 12px;
+            margin-top: 25px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            justify-content: center;
+        `;
+
+        filterContainer.innerHTML = `
+            <button class="gallery-filter-btn active" data-category="all">All Photos (${this.images.length})</button>
+            <button class="gallery-filter-btn" data-category="hackathons">Hackathons & CTF</button>
+            <button class="gallery-filter-btn" data-category="workshops">Workshops & Design</button>
+            <button class="gallery-filter-btn" data-category="stage">Main Stage & Awards</button>
+        `;
+
+        header.appendChild(filterContainer);
+
+        // Add filter button click handlers
+        filterContainer.querySelectorAll(".gallery-filter-btn").forEach(btn => {
+            btn.addEventListener("click", (e) => {
+                filterContainer.querySelectorAll(".gallery-filter-btn").forEach(b => b.classList.remove("active"));
+                e.target.classList.add("active");
+                this.filterGallery(e.target.dataset.category);
+            });
+        });
+    }
+
+    filterGallery(category) {
+        this.currentCategory = category;
+        
+        if (category === "all") {
+            this.filteredImages = [...this.images];
+        } else {
+            this.filteredImages = this.images.filter(img => img.category === category);
+        }
+
+        // Show/hide image elements in grid based on filter
+        this.images.forEach(item => {
+            const card = item.element.closest(".artwork-card, figure, article");
+            if (card) {
+                if (category === "all" || item.category === category) {
+                    card.style.display = "";
+                } else {
+                    card.style.display = "none";
+                }
+            }
+        });
+    }
+
+    setupImageClickHandlers() {
+        this.images.forEach((item) => {
+            item.element.style.cursor = "pointer";
+            item.element.title = "Click to enlarge photograph";
+            item.element.addEventListener("click", () => {
+                // Find index within current filtered list
+                const indexInFiltered = this.filteredImages.findIndex(img => img.src === item.src);
+                this.openLightbox(indexInFiltered >= 0 ? indexInFiltered : 0);
+            });
+        });
+    }
+
+    createLightboxUI() {
+        if (document.getElementById("imageLightboxModal")) return;
+
+        const modal = document.createElement("div");
+        modal.id = "imageLightboxModal";
+        modal.className = "lightbox-overlay";
+        modal.innerHTML = `
+            <div class="lightbox-dialog">
+                <button class="lightbox-close-btn" id="lightboxCloseBtn" title="Close (Esc)">&times;</button>
+                <div class="lightbox-stage">
+                    <button class="lightbox-nav-btn lightbox-prev-btn" id="lightboxPrevBtn" title="Previous Image (Left Arrow)">❮</button>
+                    <div class="lightbox-media-wrapper">
+                        <img id="lightboxMainImg" src="" alt="" class="lightbox-active-img">
+                        <div class="lightbox-caption-bar">
+                            <h4 id="lightboxTitle"></h4>
+                            <p id="lightboxCaptionText"></p>
+                        </div>
                     </div>
-                    <button class="lightbox-btn lightbox-next" id="lightboxNext">❯</button>
-                    <button class="lightbox-btn lightbox-close" id="lightboxClose">×</button>
-                    <div class="lightbox-controls">
-                        <button class="lightbox-control-btn" id="slideshowBtn">Slideshow</button>
-                        <button class="lightbox-control-btn" id="stopSlideshowBtn" style="display:none;">Stop</button>
-                        <span class="lightbox-counter" id="lightboxCounter">1 / 1</span>
-                    </div>
+                    <button class="lightbox-nav-btn lightbox-next-btn" id="lightboxNextBtn" title="Next Image (Right Arrow)">❯</button>
+                </div>
+                <div class="lightbox-toolbar">
+                    <button id="lightboxSlideshowBtn" class="lightbox-action-btn">▶ Play Slideshow</button>
+                    <span id="lightboxCounter" class="lightbox-counter">1 / 1</span>
                 </div>
             </div>
         `;
 
-        document.body.appendChild(lightbox);
+        document.body.appendChild(modal);
 
-        // Add event listeners
-        document.getElementById("lightboxPrev").addEventListener("click", () => this.prevImage());
-        document.getElementById("lightboxNext").addEventListener("click", () => this.nextImage());
-        document.getElementById("lightboxClose").addEventListener("click", () => this.closeLightbox());
-        document.getElementById("slideshowBtn").addEventListener("click", () => this.startSlideshow());
-        document.getElementById("stopSlideshowBtn").addEventListener("click", () => this.stopSlideshow());
-        document.getElementById("lightboxOverlay").addEventListener("click", (e) => {
-            if (e.target === document.getElementById("lightboxOverlay")) {
-                this.closeLightbox();
-            }
+        // Attach event listeners
+        document.getElementById("lightboxCloseBtn").addEventListener("click", () => this.closeLightbox());
+        document.getElementById("lightboxPrevBtn").addEventListener("click", () => this.prevImage());
+        document.getElementById("lightboxNextBtn").addEventListener("click", () => this.nextImage());
+        document.getElementById("lightboxSlideshowBtn").addEventListener("click", () => this.toggleSlideshow());
+
+        modal.addEventListener("click", (e) => {
+            if (e.target === modal) this.closeLightbox();
         });
 
-        // Add keyboard controls
+        // Keyboard navigation
         document.addEventListener("keydown", (e) => {
-            const lightbox = document.getElementById("imageLightbox");
-            if (!lightbox || lightbox.style.display === "none") return;
-
-            switch(e.key) {
-                case "ArrowLeft":
-                    this.prevImage();
-                    break;
-                case "ArrowRight":
-                    this.nextImage();
-                    break;
-                case "Escape":
-                    this.closeLightbox();
-                    break;
+            if (modal.style.display !== "flex") return;
+            if (e.key === "ArrowLeft") this.prevImage();
+            else if (e.key === "ArrowRight") this.nextImage();
+            else if (e.key === "Escape") this.closeLightbox();
+            else if (e.key === " ") {
+                e.preventDefault();
+                this.toggleSlideshow();
             }
         });
-
-        // Add styles
-        this.addStyles();
     }
 
-    addStyles() {
-        const style = document.createElement("style");
-        style.textContent = `
-            #imageLightbox {
-                display: none;
-            }
-
-            .lightbox-overlay {
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background-color: rgba(0, 0, 0, 0.95);
-                z-index: 10000;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-            }
-
-            .lightbox-container {
-                position: relative;
-                max-width: 90vw;
-                max-height: 85vh;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-            }
-
-            .lightbox-image-wrapper {
-                position: relative;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                max-width: 100%;
-                max-height: 70vh;
-            }
-
-            .lightbox-image {
-                max-width: 100%;
-                max-height: 70vh;
-                object-fit: contain;
-                animation: fadeIn 0.3s ease-in-out;
-            }
-
-            @keyframes fadeIn {
-                from { opacity: 0; }
-                to { opacity: 1; }
-            }
-
-            .lightbox-caption {
-                color: #ED4B00;
-                text-align: center;
-                margin-top: 15px;
-                font-size: 16px;
-                font-weight: 600;
-            }
-
-            .lightbox-btn {
-                position: absolute;
-                background: none;
-                border: none;
-                color: #ED4B00;
-                font-size: 36px;
-                cursor: pointer;
-                padding: 10px;
-                transition: all 0.3s ease;
-                z-index: 10001;
-            }
-
-            .lightbox-btn:hover {
-                color: #F2F3F4;
-                transform: scale(1.2);
-            }
-
-            .lightbox-prev {
-                left: 10px;
-                top: 50%;
-                transform: translateY(-50%);
-            }
-
-            .lightbox-next {
-                right: 10px;
-                top: 50%;
-                transform: translateY(-50%);
-            }
-
-            .lightbox-close {
-                top: 10px;
-                right: 10px;
-                font-size: 42px;
-            }
-
-            .lightbox-controls {
-                display: flex;
-                gap: 15px;
-                margin-top: 20px;
-                align-items: center;
-                flex-wrap: wrap;
-                justify-content: center;
-            }
-
-            .lightbox-control-btn {
-                background-color: #ED4B00;
-                color: #F2F3F4;
-                border: none;
-                padding: 10px 20px;
-                cursor: pointer;
-                border-radius: 4px;
-                font-weight: 600;
-                transition: background-color 0.3s ease;
-            }
-
-            .lightbox-control-btn:hover {
-                background-color: #F2F3F4;
-                color: #020035;
-            }
-
-            .lightbox-counter {
-                color: #ED4B00;
-                font-weight: 600;
-                font-size: 14px;
-                white-space: nowrap;
-            }
-
-            @media (max-width: 768px) {
-                .lightbox-btn {
-                    font-size: 28px;
-                }
-
-                .lightbox-image {
-                    max-height: 60vh;
-                }
-
-                .lightbox-close {
-                    font-size: 36px;
-                }
-            }
-        `;
-        document.head.appendChild(style);
-    }
-
-    openGallery(index) {
+    openLightbox(index) {
+        if (this.filteredImages.length === 0) return;
         this.currentIndex = index;
-        const lightbox = document.getElementById("imageLightbox");
-        lightbox.style.display = "flex";
-        this.updateImage();
+        const modal = document.getElementById("imageLightboxModal");
+        modal.style.display = "flex";
+        this.updateLightboxContent();
     }
 
     closeLightbox() {
-        if (this.isSlideshow) {
-            this.stopSlideshow();
-        }
-        const lightbox = document.getElementById("imageLightbox");
-        lightbox.style.display = "none";
+        this.stopSlideshow();
+        const modal = document.getElementById("imageLightboxModal");
+        if (modal) modal.style.display = "none";
     }
 
-    updateImage() {
-        const image = this.images[this.currentIndex];
-        const lightboxImage = document.getElementById("lightboxImage");
-        const lightboxCaption = document.getElementById("lightboxCaption");
-        const lightboxCounter = document.getElementById("lightboxCounter");
+    updateLightboxContent() {
+        const item = this.filteredImages[this.currentIndex];
+        if (!item) return;
 
-        lightboxImage.src = image.src;
-        lightboxImage.alt = image.alt;
-        lightboxCaption.textContent = image.alt;
-        lightboxCounter.textContent = `${this.currentIndex + 1} / ${this.images.length}`;
+        const imgEl = document.getElementById("lightboxMainImg");
+        const titleEl = document.getElementById("lightboxTitle");
+        const captionEl = document.getElementById("lightboxCaptionText");
+        const counterEl = document.getElementById("lightboxCounter");
+
+        imgEl.src = item.src;
+        imgEl.alt = item.alt;
+        titleEl.textContent = item.title;
+        captionEl.textContent = item.alt;
+        counterEl.textContent = `${this.currentIndex + 1} / ${this.filteredImages.length}`;
     }
 
     nextImage() {
-        this.currentIndex = (this.currentIndex + 1) % this.images.length;
-        this.updateImage();
+        if (this.filteredImages.length === 0) return;
+        this.currentIndex = (this.currentIndex + 1) % this.filteredImages.length;
+        this.updateLightboxContent();
     }
 
     prevImage() {
-        this.currentIndex = (this.currentIndex - 1 + this.images.length) % this.images.length;
-        this.updateImage();
+        if (this.filteredImages.length === 0) return;
+        this.currentIndex = (this.currentIndex - 1 + this.filteredImages.length) % this.filteredImages.length;
+        this.updateLightboxContent();
+    }
+
+    toggleSlideshow() {
+        if (this.isSlideshowActive) {
+            this.stopSlideshow();
+        } else {
+            this.startSlideshow();
+        }
     }
 
     startSlideshow() {
-        this.isSlideshow = true;
-        document.getElementById("slideshowBtn").style.display = "none";
-        document.getElementById("stopSlideshowBtn").style.display = "inline-block";
+        this.isSlideshowActive = true;
+        const btn = document.getElementById("lightboxSlideshowBtn");
+        if (btn) btn.textContent = "⏸ Pause Slideshow";
 
-        this.slideshowInterval = setInterval(() => {
+        this.slideshowTimer = setInterval(() => {
             this.nextImage();
-        }, 3000); // Change image every 3 seconds
+        }, 2500);
     }
 
     stopSlideshow() {
-        this.isSlideshow = false;
-        clearInterval(this.slideshowInterval);
-        document.getElementById("slideshowBtn").style.display = "inline-block";
-        document.getElementById("stopSlideshowBtn").style.display = "none";
+        this.isSlideshowActive = false;
+        clearInterval(this.slideshowTimer);
+        const btn = document.getElementById("lightboxSlideshowBtn");
+        if (btn) btn.textContent = "▶ Play Slideshow";
     }
 }
 
-// Initialize gallery when DOM is loaded
+// Initialize Gallery when DOM is loaded
 document.addEventListener("DOMContentLoaded", () => {
-    new ImageGallery();
+    window.imageGallery = new ImageGallery();
 });

@@ -1,21 +1,37 @@
 // =====================================================
-// ORGANIZER DASHBOARD FUNCTIONALITY
+// TECHFEST 2026 - ORGANIZER DASHBOARD & TASK MANAGER
 // =====================================================
 
-const STORAGE_KEY = "hash26Participants";
+const PARTICIPANTS_KEY = "hash26Participants";
 const TASKS_KEY = "hash26Tasks";
 
 // =====================================================
-// TASK MANAGER CLASS
+// TASK MANAGER CLASS (ES6+)
 // =====================================================
 
 class TaskManager {
     constructor() {
         this.tasks = this.loadTasks();
+        this.currentFilter = "all";
     }
 
     loadTasks() {
-        return JSON.parse(localStorage.getItem(TASKS_KEY)) || [];
+        const stored = localStorage.getItem(TASKS_KEY);
+        if (stored) {
+            try {
+                return JSON.parse(stored);
+            } catch (e) {
+                console.error("Error loading tasks", e);
+            }
+        }
+        // Seed sample tasks if empty
+        const defaultTasks = [
+            { id: 1, text: "Verify event stage AV equipment setup", completed: true, createdAt: new Date().toLocaleDateString() },
+            { id: 2, text: "Confirm CTF server hosting credentials", completed: false, createdAt: new Date().toLocaleDateString() },
+            { id: 3, text: "Distribute participant identity badges", completed: false, createdAt: new Date().toLocaleDateString() }
+        ];
+        localStorage.setItem(TASKS_KEY, JSON.stringify(defaultTasks));
+        return defaultTasks;
     }
 
     saveTasks() {
@@ -23,42 +39,48 @@ class TaskManager {
     }
 
     addTask(text) {
+        const cleanText = text.trim();
+        if (!cleanText) return null;
+
         const task = {
             id: Date.now(),
-            text: text.trim(),
+            text: cleanText,
             completed: false,
-            createdAt: new Date().toLocaleString()
+            createdAt: new Date().toLocaleDateString()
         };
-        this.tasks.push(task);
+
+        this.tasks.unshift(task);
         this.saveTasks();
         return task;
     }
 
-    deleteTask(id) {
-        this.tasks = this.tasks.filter(t => t.id !== id);
-        this.saveTasks();
-    }
-
     toggleTask(id) {
-        const task = this.tasks.find(t => t.id === id);
+        const task = this.tasks.find(t => String(t.id) === String(id));
         if (task) {
             task.completed = !task.completed;
             this.saveTasks();
         }
     }
 
-    getAllTasks() {
+    deleteTask(id) {
+        this.tasks = this.tasks.filter(t => String(t.id) !== String(id));
+        this.saveTasks();
+    }
+
+    getTasks(filter = "all") {
+        if (filter === "pending") return this.tasks.filter(t => !t.completed);
+        if (filter === "completed") return this.tasks.filter(t => t.completed);
         return this.tasks;
     }
 
-    clearAll() {
-        this.tasks = [];
+    clearCompleted() {
+        this.tasks = this.tasks.filter(t => !t.completed);
         this.saveTasks();
     }
 }
 
 // =====================================================
-// PARTICIPANT MANAGER CLASS (Dashboard View)
+// DASHBOARD PARTICIPANT MANAGER
 // =====================================================
 
 class DashboardParticipantManager {
@@ -67,48 +89,63 @@ class DashboardParticipantManager {
     }
 
     loadParticipants() {
-        return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+        const stored = localStorage.getItem(PARTICIPANTS_KEY);
+        if (stored) {
+            try {
+                return JSON.parse(stored);
+            } catch (e) {
+                console.error("Error loading participants", e);
+            }
+        }
+        return [];
     }
 
     saveParticipants() {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(this.participants));
+        localStorage.setItem(PARTICIPANTS_KEY, JSON.stringify(this.participants));
     }
 
     getAllParticipants() {
+        this.participants = this.loadParticipants();
         return this.participants;
     }
 
     getParticipant(id) {
-        return this.participants.find(p => p.id === id);
+        return this.getAllParticipants().find(p => String(p.id) === String(id));
     }
 
     updateParticipant(id, updatedData) {
-        const index = this.participants.findIndex(p => p.id === id);
+        this.getAllParticipants();
+        const index = this.participants.findIndex(p => String(p.id) === String(id));
         if (index > -1) {
             this.participants[index] = { ...this.participants[index], ...updatedData };
             this.saveParticipants();
             return this.participants[index];
         }
+        return null;
     }
 
     deleteParticipant(id) {
-        this.participants = this.participants.filter(p => p.id !== id);
+        this.getAllParticipants();
+        this.participants = this.participants.filter(p => String(p.id) !== String(id));
         this.saveParticipants();
     }
 
     searchParticipants(searchTerm) {
         const term = searchTerm.toLowerCase().trim();
-        if (!term) return this.participants;
+        const all = this.getAllParticipants();
+        if (!term) return all;
 
-        return this.participants.filter(p =>
-            p.fullName?.toLowerCase().includes(term) ||
-            p.email?.toLowerCase().includes(term) ||
-            String(p.id).includes(term)
+        return all.filter(p =>
+            (p.fullName && p.fullName.toLowerCase().includes(term)) ||
+            (p.email && p.email.toLowerCase().includes(term)) ||
+            (p.phone && p.phone.includes(term)) ||
+            (p.college && p.college.toLowerCase().includes(term)) ||
+            String(p.id).toLowerCase().includes(term)
         );
     }
 
     clearAll() {
-        if (confirm("Are you sure you want to delete all participants? This cannot be undone.")) {
+        if (confirm("Are you sure you want to delete ALL participants? This cannot be undone.")) {
             this.participants = [];
             this.saveParticipants();
             return true;
@@ -117,70 +154,64 @@ class DashboardParticipantManager {
     }
 }
 
-// Global instances
-let dashboardParticipantManager = new DashboardParticipantManager();
-let taskManager = new TaskManager();
+// Instances
+const taskManager = new TaskManager();
+const dashboardParticipantManager = new DashboardParticipantManager();
 
 // =====================================================
 // DASHBOARD INITIALIZATION
 // =====================================================
 
 function initializeDashboard() {
-    initializeParticipantDisplay();
-    initializeParticipantSearch();
-    initializeTaskManager();
-    initializeLogout();
-    displayParticipantStats();
+    renderParticipantStats();
+    renderParticipantsList();
+    setupParticipantSearch();
+    setupTaskManagerUI();
+    setupLogoutButton();
 }
 
-// =====================================================
-// PARTICIPANT DISPLAY
-// =====================================================
-
-function displayParticipantStats() {
-    const countElement = document.getElementById("totalParticipants");
-    if (countElement) {
-        countElement.textContent = dashboardParticipantManager.getAllParticipants().length;
+function renderParticipantStats() {
+    const totalEl = document.getElementById("totalParticipants");
+    if (totalEl) {
+        totalEl.textContent = dashboardParticipantManager.getAllParticipants().length;
     }
 }
 
-function initializeParticipantDisplay() {
+function renderParticipantsList(customList = null) {
     const container = document.getElementById("participantsList");
     if (!container) return;
 
-    displayParticipants(dashboardParticipantManager.getAllParticipants(), container);
-}
+    const participants = customList !== null ? customList : dashboardParticipantManager.getAllParticipants();
 
-function displayParticipants(participants, container) {
     if (participants.length === 0) {
-        container.innerHTML = '<p style="text-align: center; padding: 20px; color: #666;">No participants found.</p>';
+        container.innerHTML = `<p style="text-align: center; padding: 25px; color: #777;">No participants registered.</p>`;
         return;
     }
 
     container.innerHTML = `
-        <div class="participants-table-wrapper">
-            <table class="participants-table">
+        <div class="participants-table-wrapper" style="overflow-x: auto;">
+            <table class="participants-table" style="width:100%; border-collapse: collapse; margin-top:10px;">
                 <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Phone</th>
-                        <th>College</th>
-                        <th>ID</th>
-                        <th>Actions</th>
+                    <tr style="background: var(--dark-primary, #020035); color: white;">
+                        <th style="padding:10px; text-align:left;">ID</th>
+                        <th style="padding:10px; text-align:left;">Name</th>
+                        <th style="padding:10px; text-align:left;">Email</th>
+                        <th style="padding:10px; text-align:left;">Phone</th>
+                        <th style="padding:10px; text-align:left;">College</th>
+                        <th style="padding:10px; text-align:center;">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     ${participants.map(p => `
-                        <tr data-participant-id="${p.id}">
-                            <td>${p.fullName || 'N/A'}</td>
-                            <td>${p.email || 'N/A'}</td>
-                            <td>${p.phone || 'N/A'}</td>
-                            <td>${p.college || 'N/A'}</td>
-                            <td><small>${p.id}</small></td>
-                            <td>
-                                <button class="btn-action btn-edit" data-id="${p.id}">Edit</button>
-                                <button class="btn-action btn-delete" data-id="${p.id}">Delete</button>
+                        <tr style="border-bottom: 1px solid #ddd;">
+                            <td style="padding:10px;"><small><strong>${escapeHtml(p.id)}</strong></small></td>
+                            <td style="padding:10px;">${escapeHtml(p.fullName)}</td>
+                            <td style="padding:10px;">${escapeHtml(p.email)}</td>
+                            <td style="padding:10px;">${escapeHtml(p.phone)}</td>
+                            <td style="padding:10px;">${escapeHtml(p.college)}</td>
+                            <td style="padding:10px; text-align:center; white-space:nowrap;">
+                                <button class="btn-action btn-edit" onclick="editDashboardParticipant('${p.id}')">Edit</button>
+                                <button class="btn-action btn-delete" onclick="deleteDashboardParticipant('${p.id}')" style="background:#dc3545;">Delete</button>
                             </td>
                         </tr>
                     `).join("")}
@@ -188,396 +219,246 @@ function displayParticipants(participants, container) {
             </table>
         </div>
     `;
+}
 
-    // Add event listeners
-    container.querySelectorAll(".btn-edit").forEach(btn => {
-        btn.addEventListener("click", (e) => editParticipant(e.target.dataset.id));
-    });
+function setupParticipantSearch() {
+    const input = document.getElementById("participantSearchInput");
+    if (!input) return;
 
-    container.querySelectorAll(".btn-delete").forEach(btn => {
-        btn.addEventListener("click", (e) => deleteParticipant(e.target.dataset.id));
+    input.addEventListener("input", (e) => {
+        const results = dashboardParticipantManager.searchParticipants(e.target.value);
+        renderParticipantsList(results);
     });
 }
 
-function editParticipant(id) {
-    const participant = dashboardParticipantManager.getParticipant(parseInt(id));
-    if (!participant) return;
+function editDashboardParticipant(id) {
+    const p = dashboardParticipantManager.getParticipant(id);
+    if (!p) return;
 
-    // Show edit modal or form
-    const editForm = document.getElementById("editParticipantForm");
-    if (!editForm) {
-        // Create modal if it doesn't exist
-        const modal = document.createElement("div");
-        modal.id = "editModal";
-        modal.innerHTML = `
-            <div class="modal-overlay">
-                <div class="modal-content">
-                    <h2>Edit Participant</h2>
-                    <form id="editParticipantForm">
-                        <input type="hidden" id="editParticipantId">
-                        <div class="form-group">
-                            <label>Full Name</label>
-                            <input type="text" id="editFullName" class="form-input" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Email</label>
-                            <input type="email" id="editEmail" class="form-input" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Phone</label>
-                            <input type="tel" id="editPhone" class="form-input" required>
-                        </div>
-                        <div class="form-group">
-                            <label>College</label>
-                            <input type="text" id="editCollege" class="form-input" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Department</label>
-                            <input type="text" id="editDepartment" class="form-input" required>
-                        </div>
-                        <div class="modal-buttons">
-                            <button type="submit" class="btn-action">Save Changes</button>
-                            <button type="button" class="btn-action" onclick="closeEditModal()">Cancel</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
+    let modal = document.getElementById("organizerEditModal");
+    if (!modal) {
+        modal = document.createElement("div");
+        modal.id = "organizerEditModal";
+        modal.style.cssText = `
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.75); display: flex; align-items: center; justify-content: center;
+            z-index: 10000; padding: 20px;
         `;
         document.body.appendChild(modal);
-        addModalStyles();
     }
 
-    // Populate form
-    document.getElementById("editParticipantId").value = participant.id;
-    document.getElementById("editFullName").value = participant.fullName || "";
-    document.getElementById("editEmail").value = participant.email || "";
-    document.getElementById("editPhone").value = participant.phone || "";
-    document.getElementById("editCollege").value = participant.college || "";
-    document.getElementById("editDepartment").value = participant.department || "";
+    modal.innerHTML = `
+        <div style="background: white; padding: 25px; max-width: 500px; width: 100%; border-radius: 8px; border-top: 5px solid var(--highlight, #ED4B00);">
+            <h2 style="margin-bottom: 15px; color: var(--dark-primary, #020035);">Edit Participant Details</h2>
+            <form id="orgEditForm">
+                <div style="margin-bottom: 10px;">
+                    <label style="display:block; font-weight:bold; margin-bottom:4px;">Full Name</label>
+                    <input type="text" id="orgEditName" class="form-input" value="${escapeHtml(p.fullName)}" required style="width:100%; padding:8px;">
+                </div>
+                <div style="margin-bottom: 10px;">
+                    <label style="display:block; font-weight:bold; margin-bottom:4px;">Email</label>
+                    <input type="email" id="orgEditEmail" class="form-input" value="${escapeHtml(p.email)}" required style="width:100%; padding:8px;">
+                </div>
+                <div style="margin-bottom: 10px;">
+                    <label style="display:block; font-weight:bold; margin-bottom:4px;">Phone</label>
+                    <input type="tel" id="orgEditPhone" class="form-input" value="${escapeHtml(p.phone)}" required style="width:100%; padding:8px;">
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display:block; font-weight:bold; margin-bottom:4px;">College</label>
+                    <input type="text" id="orgEditCollege" class="form-input" value="${escapeHtml(p.college)}" required style="width:100%; padding:8px;">
+                </div>
+                <div style="display:flex; justify-content:flex-end; gap:10px;">
+                    <button type="button" class="btn-action" onclick="closeOrgEditModal()" style="background:#666;">Cancel</button>
+                    <button type="submit" class="btn-action">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    `;
 
-    // Show modal
-    document.getElementById("editModal").style.display = "flex";
+    modal.style.display = "flex";
 
-    // Handle form submission
-    const form = document.getElementById("editParticipantForm");
-    form.onsubmit = (e) => {
+    document.getElementById("orgEditForm").onsubmit = (e) => {
         e.preventDefault();
-        const updatedData = {
-            fullName: document.getElementById("editFullName").value,
-            email: document.getElementById("editEmail").value,
-            phone: document.getElementById("editPhone").value,
-            college: document.getElementById("editCollege").value,
-            department: document.getElementById("editDepartment").value
+        const updated = {
+            fullName: document.getElementById("orgEditName").value.trim(),
+            email: document.getElementById("orgEditEmail").value.trim(),
+            phone: document.getElementById("orgEditPhone").value.trim(),
+            college: document.getElementById("orgEditCollege").value.trim()
         };
-
-        dashboardParticipantManager.updateParticipant(parseInt(participant.id), updatedData);
-        closeEditModal();
-        initializeParticipantDisplay();
-        displayParticipantStats();
+        dashboardParticipantManager.updateParticipant(id, updated);
+        closeOrgEditModal();
+        renderParticipantsList();
+        renderParticipantStats();
     };
 }
 
-function closeEditModal() {
-    const modal = document.getElementById("editModal");
+function closeOrgEditModal() {
+    const modal = document.getElementById("organizerEditModal");
     if (modal) modal.style.display = "none";
 }
 
-function deleteParticipant(id) {
-    if (confirm("Are you sure you want to delete this participant?")) {
-        dashboardParticipantManager.deleteParticipant(parseInt(id));
-        initializeParticipantDisplay();
-        displayParticipantStats();
+function deleteDashboardParticipant(id) {
+    if (confirm(`Delete participant ${id}?`)) {
+        dashboardParticipantManager.deleteParticipant(id);
+        renderParticipantsList();
+        renderParticipantStats();
     }
 }
 
-function addModalStyles() {
-    const style = document.createElement("style");
-    style.textContent = `
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: rgba(0, 0, 0, 0.7);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 5000;
-        }
-
-        .modal-content {
-            background: white;
-            padding: 30px;
-            border-radius: 8px;
-            max-width: 500px;
-            width: 90%;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-        }
-
-        .modal-content h2 {
-            margin-bottom: 20px;
-            color: #020035;
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 600;
-            color: #020035;
-        }
-
-        .form-input {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 16px;
-        }
-
-        .modal-buttons {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-        }
-
-        .modal-buttons button {
-            flex: 1;
-        }
-
-        .participants-table-wrapper {
-            overflow-x: auto;
-        }
-
-        .participants-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-
-        .participants-table th,
-        .participants-table td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-
-        .participants-table th {
-            background-color: #020035;
-            color: #F2F3F4;
-            font-weight: 600;
-        }
-
-        .participants-table tr:hover {
-            background-color: #f5f5f5;
-        }
-
-        .btn-action {
-            padding: 8px 16px;
-            background-color: #ED4B00;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: background-color 0.3s ease;
-            margin-right: 5px;
-        }
-
-        .btn-action:hover {
-            background-color: #020035;
-        }
-    `;
-    document.head.appendChild(style);
+function clearAllParticipants() {
+    if (dashboardParticipantManager.clearAll()) {
+        renderParticipantsList();
+        renderParticipantStats();
+    }
 }
 
-// =====================================================
-// PARTICIPANT SEARCH
-// =====================================================
-
-function initializeParticipantSearch() {
-    const searchInput = document.getElementById("participantSearchInput");
-    if (!searchInput) return;
-
-    searchInput.addEventListener("input", (e) => {
-        const searchTerm = e.target.value;
-        const results = dashboardParticipantManager.searchParticipants(searchTerm);
-        const container = document.getElementById("participantsList");
-        displayParticipants(results, container);
-    });
-}
+// Make functions globally available
+window.editDashboardParticipant = editDashboardParticipant;
+window.closeOrgEditModal = closeOrgEditModal;
+window.deleteDashboardParticipant = deleteDashboardParticipant;
+window.clearAllParticipants = clearAllParticipants;
 
 // =====================================================
-// TASK MANAGER
+// TASK MANAGER UI & HANDLERS
 // =====================================================
 
-function initializeTaskManager() {
-    const addTaskBtn = document.getElementById("addTaskBtn");
+function setupTaskManagerUI() {
     const taskInput = document.getElementById("taskInput");
+    const addTaskBtn = document.getElementById("addTaskBtn");
 
-    if (addTaskBtn) {
-        addTaskBtn.addEventListener("click", () => {
-            if (taskInput.value.trim()) {
-                taskManager.addTask(taskInput.value);
+    if (addTaskBtn && taskInput) {
+        const handleAddTask = () => {
+            const text = taskInput.value.trim();
+            if (text) {
+                taskManager.addTask(text);
                 taskInput.value = "";
-                displayTasks();
+                renderTasks();
             }
-        });
+        };
+
+        addTaskBtn.onclick = handleAddTask;
+
+        taskInput.onkeypress = (e) => {
+            if (e.key === "Enter") handleAddTask();
+        };
     }
 
-    if (taskInput) {
-        taskInput.addEventListener("keypress", (e) => {
-            if (e.key === "Enter") {
-                addTaskBtn?.click();
-            }
-        });
-    }
-
-    displayTasks();
+    renderTasks();
 }
 
-function displayTasks() {
+function renderTasks(filter = "all") {
     const container = document.getElementById("tasksList");
     if (!container) return;
 
-    const tasks = taskManager.getAllTasks();
+    const tasks = taskManager.getTasks(filter);
+
+    // Filter Buttons Bar
+    let filterBar = document.getElementById("taskFilterBar");
+    if (!filterBar) {
+        filterBar = document.createElement("div");
+        filterBar.id = "taskFilterBar";
+        filterBar.style.cssText = "display: flex; gap: 8px; margin-bottom: 12px; align-items: center;";
+        container.parentNode.insertBefore(filterBar, container);
+    }
+
+    filterBar.innerHTML = `
+        <button type="button" class="btn-task-filter ${filter === 'all' ? 'active' : ''}" onclick="filterTasks('all')">All (${taskManager.getTasks('all').length})</button>
+        <button type="button" class="btn-task-filter ${filter === 'pending' ? 'active' : ''}" onclick="filterTasks('pending')">Pending (${taskManager.getTasks('pending').length})</button>
+        <button type="button" class="btn-task-filter ${filter === 'completed' ? 'active' : ''}" onclick="filterTasks('completed')">Completed (${taskManager.getTasks('completed').length})</button>
+        ${taskManager.getTasks('completed').length > 0 ? `<button type="button" class="btn-task-filter" style="margin-left:auto; background:#dc3545; color:white;" onclick="clearCompletedTasks()">Clear Completed</button>` : ''}
+    `;
 
     if (tasks.length === 0) {
-        container.innerHTML = '<p style="text-align: center; padding: 20px; color: #666;">No tasks yet. Add one to get started!</p>';
+        container.innerHTML = `<p style="text-align: center; padding: 20px; color: #777; font-style: italic;">No tasks found.</p>`;
         return;
     }
 
     container.innerHTML = tasks.map(task => `
-        <div class="task-item ${task.completed ? 'task-completed' : ''}">
-            <div class="task-content">
-                <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''} 
-                       onchange="toggleTask(${task.id})">
-                <span class="task-text">${task.text}</span>
+        <div class="task-item ${task.completed ? 'task-completed' : ''}" style="
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 12px 15px; margin-bottom: 8px; background: #f9f9f9;
+            border-left: 4px solid ${task.completed ? '#28a745' : 'var(--highlight, #ED4B00)'};
+            border-radius: 4px; transition: all 0.2s ease;
+        ">
+            <div style="display: flex; align-items: center; gap: 12px; flex: 1;">
+                <input type="checkbox" ${task.completed ? 'checked' : ''} 
+                       onchange="toggleTaskHandler('${task.id}')"
+                       style="width: 18px; height: 18px; cursor: pointer;">
+                <span class="task-text" style="font-size: 15px; ${task.completed ? 'text-decoration: line-through; color: #888;' : 'color: #222; font-weight: 500;'}">
+                    ${escapeHtml(task.text)}
+                </span>
             </div>
-            <button class="btn-delete-task" onclick="deleteTask(${task.id})">Delete</button>
+            <button onclick="deleteTaskHandler('${task.id}')" style="
+                background: #dc3545; color: white; border: none; padding: 5px 10px;
+                border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold;
+            ">Delete</button>
         </div>
     `).join("");
-
-    addTaskStyles();
 }
 
-function toggleTask(id) {
+function filterTasks(filter) {
+    taskManager.currentFilter = filter;
+    renderTasks(filter);
+}
+
+function toggleTaskHandler(id) {
     taskManager.toggleTask(id);
-    displayTasks();
+    renderTasks(taskManager.currentFilter);
 }
 
-function deleteTask(id) {
+function deleteTaskHandler(id) {
     taskManager.deleteTask(id);
-    displayTasks();
+    renderTasks(taskManager.currentFilter);
 }
 
-function addTaskStyles() {
-    if (!document.querySelector("style[data-tasks]")) {
-        const style = document.createElement("style");
-        style.setAttribute("data-tasks", "true");
-        style.textContent = `
-            .task-item {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                padding: 15px;
-                background: #f9f9f9;
-                border-left: 4px solid #ED4B00;
-                margin-bottom: 10px;
-                border-radius: 4px;
-                transition: all 0.3s ease;
-            }
-
-            .task-item:hover {
-                background: #f0f0f0;
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            }
-
-            .task-completed {
-                opacity: 0.6;
-            }
-
-            .task-completed .task-text {
-                text-decoration: line-through;
-                color: #999;
-            }
-
-            .task-content {
-                display: flex;
-                align-items: center;
-                gap: 12px;
-                flex: 1;
-            }
-
-            .task-checkbox {
-                width: 20px;
-                height: 20px;
-                cursor: pointer;
-            }
-
-            .task-text {
-                font-size: 16px;
-                color: #333;
-            }
-
-            .btn-delete-task {
-                background-color: #dc3545;
-                color: white;
-                border: none;
-                padding: 8px 12px;
-                border-radius: 4px;
-                cursor: pointer;
-                font-weight: 600;
-                transition: background-color 0.3s ease;
-            }
-
-            .btn-delete-task:hover {
-                background-color: #c82333;
-            }
-        `;
-        document.head.appendChild(style);
-    }
+function clearCompletedTasks() {
+    taskManager.clearCompleted();
+    renderTasks(taskManager.currentFilter);
 }
 
+window.filterTasks = filterTasks;
+window.toggleTaskHandler = toggleTaskHandler;
+window.deleteTaskHandler = deleteTaskHandler;
+window.clearCompletedTasks = clearCompletedTasks;
+
 // =====================================================
-// LOGOUT
+// LOGOUT HANDLER
 // =====================================================
 
-function initializeLogout() {
+function setupLogoutButton() {
     const logoutBtn = document.getElementById("logoutBtn");
     if (logoutBtn) {
-        logoutBtn.addEventListener("click", () => {
+        logoutBtn.onclick = () => {
             localStorage.removeItem("organizerLoggedIn");
-            alert("You have been logged out successfully.");
-            window.location.href = "organizer-login.html";
-        });
+            localStorage.removeItem("organizerUsername");
+            alert("Logged out successfully.");
+            window.location.href = "organizer.html";
+        };
     }
 }
 
-// =====================================================
-// CLEAR ALL PARTICIPANTS
-// =====================================================
-
-function clearAllParticipants() {
-    if (dashboardParticipantManager.clearAll()) {
-        initializeParticipantDisplay();
-        displayParticipantStats();
-        alert("All participants have been cleared.");
-    }
+// Utility: HTML Sanitizer
+function escapeHtml(str) {
+    if (!str) return "";
+    return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }
 
 // =====================================================
-// INITIALIZATION
+// PAGE LOAD
 // =====================================================
 
 document.addEventListener("DOMContentLoaded", () => {
-    // Check if user is logged in
-    if (!localStorage.getItem("organizerLoggedIn")) {
-        window.location.href = "organizer-login.html";
+    // Auth check for dashboard
+    if (window.location.pathname.includes("organizer-dashboard.html")) {
+        if (!localStorage.getItem("organizerLoggedIn")) {
+            window.location.href = "organizer.html";
+            return;
+        }
     }
 
     initializeDashboard();

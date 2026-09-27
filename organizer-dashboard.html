@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Organizer Dashboard - Hash'26</title>
   <link rel="stylesheet" href="css/style.css">
+  <script defer src="js/app.js"></script>
   <style>
     .dashboard-container {
       background: linear-gradient(135deg, var(--bg-secondary) 0%, #dcdce0 100%);
@@ -36,7 +37,7 @@
 
     .dashboard-content {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1.2fr 0.8fr;
       gap: 30px;
       margin-bottom: 40px;
     }
@@ -110,15 +111,6 @@
       background: #fafafa;
     }
 
-    .search-box::placeholder {
-      color: #999;
-    }
-
-    .search-box:hover {
-      border-color: #d0d0d0;
-      background: white;
-    }
-
     .search-box:focus {
       outline: none;
       border-color: var(--highlight);
@@ -141,11 +133,6 @@
       font-family: var(--font-primary);
       transition: all 0.3s ease;
       background: #fafafa;
-    }
-
-    .task-input-group input:hover {
-      border-color: #d0d0d0;
-      background: white;
     }
 
     .task-input-group input:focus {
@@ -176,10 +163,6 @@
       box-shadow: 0 6px 20px rgba(237, 75, 0, 0.3);
     }
 
-    .task-input-group button:active {
-      transform: translateY(0);
-    }
-
     .btn-clear-all {
       background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
       color: white;
@@ -191,18 +174,7 @@
       font-size: 13px;
       transition: all 0.3s ease;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
-      box-shadow: 0 2px 8px rgba(220, 53, 69, 0.2);
       white-space: nowrap;
-    }
-
-    .btn-clear-all:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
-    }
-
-    .btn-clear-all:active {
-      transform: translateY(0);
     }
 
     .tasks-list {
@@ -211,22 +183,37 @@
       padding-right: 5px;
     }
 
-    .tasks-list::-webkit-scrollbar {
-      width: 8px;
+    .btn-task-filter {
+      padding: 6px 12px;
+      border: 1px solid #ccc;
+      background: #fff;
+      cursor: pointer;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      transition: all 0.2s ease;
     }
 
-    .tasks-list::-webkit-scrollbar-track {
-      background: #f1f1f1;
-      border-radius: 10px;
+    .btn-task-filter.active {
+      background: var(--dark-primary, #020035);
+      color: white;
+      border-color: var(--dark-primary, #020035);
     }
 
-    .tasks-list::-webkit-scrollbar-thumb {
-      background: var(--highlight);
-      border-radius: 10px;
+    .btn-action {
+      padding: 6px 12px;
+      background: var(--dark-primary, #020035);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      margin-right: 4px;
     }
 
-    .tasks-list::-webkit-scrollbar-thumb:hover {
-      background: #FF6B35;
+    .btn-action:hover {
+      background: var(--highlight, #ED4B00);
     }
 
     @media (max-width: 1200px) {
@@ -254,17 +241,6 @@
       font-size: 14px;
       transition: all 0.3s ease;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
-      box-shadow: 0 2px 8px rgba(220, 53, 69, 0.2);
-    }
-
-    .btn-logout:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
-    }
-
-    .btn-logout:active {
-      transform: translateY(0);
     }
 
     .participants-header {
@@ -273,13 +249,6 @@
       align-items: center;
       gap: 10px;
       flex-wrap: wrap;
-    }
-
-    .participants-header h2 {
-      margin: 0;
-      padding-bottom: 0;
-      border: none;
-      flex: 1;
     }
   </style>
 </head>
@@ -296,6 +265,8 @@
           <li><a href="index.html" class="nav-item">Home</a></li>
           <li><a href="events.html" class="nav-item">Events</a></li>
           <li><a href="gallery.html" class="nav-item">Gallery</a></li>
+          <li><a href="participant.html" class="nav-item">Participants</a></li>
+          <li><a href="organizer.html" class="nav-item">Organizer</a></li>
           <li><a href="contact.html" class="nav-item">Contact</a></li>
         </ul>
       </nav>
@@ -306,7 +277,7 @@
     <div class="dashboard-header">
       <div class="container">
         <h1>ORGANIZER DASHBOARD</h1>
-        <p>Manage Hash'26 participants and tasks</p>
+        <p>Manage Hash'26 participants, search, edit details, and organize tasks.</p>
       </div>
     </div>
 
@@ -315,17 +286,17 @@
         <!-- Participants Section -->
         <div class="dashboard-section">
           <div class="participants-header">
-            <h2>Participants</h2>
+            <h2>Participants Directory</h2>
             <button class="btn-clear-all" onclick="clearAllParticipants()">Clear All</button>
           </div>
 
           <div class="stat-box">
-            <div class="stat-label">Total Registered</div>
+            <div class="stat-label">Total Registered Participants</div>
             <div class="stat-number" id="totalParticipants">0</div>
           </div>
 
           <input type="text" id="participantSearchInput" class="search-box" 
-                 placeholder="Search by name, email, or ID...">
+                 placeholder="Search by name, email, phone, college, or ID...">
 
           <div id="participantsList">
             <p style="text-align: center; padding: 20px; color: #666;">Loading participants...</p>
@@ -334,7 +305,7 @@
 
         <!-- Task Manager Section -->
         <div class="dashboard-section">
-          <h2>Task Manager</h2>
+          <h2>Organizer Task Manager</h2>
 
           <div class="task-input-group">
             <input type="text" id="taskInput" placeholder="Enter a new task...">
@@ -346,7 +317,7 @@
           </div>
 
           <div class="logout-section">
-            <button class="btn-logout" id="logoutBtn">Logout</button>
+            <button class="btn-logout" id="logoutBtn">Logout Session</button>
           </div>
         </div>
       </div>
@@ -371,8 +342,9 @@
             <li><a href="events.html">Events</a></li>
             <li><a href="gallery.html">Gallery</a></li>
             <li><a href="register.html">Register</a></li>
+            <li><a href="participant.html">Participants</a></li>
+            <li><a href="organizer.html">Organizer</a></li>
             <li><a href="contact.html">Contact</a></li>
-            <li><a href="organizer-login.html">Organizer</a></li>
           </ul>
         </nav>
 

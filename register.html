@@ -6,7 +6,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Register - Hash'26</title>
   <link rel="stylesheet" href="css/style.css">
-  <script src="./script/script.js"></script>
   <script defer src="js/app.js"></script>
   <style>
     .registered-participants-section {
@@ -75,6 +74,8 @@
           <li><a href="index.html" class="nav-item">Home</a></li>
           <li><a href="events.html" class="nav-item">Events</a></li>
           <li><a href="gallery.html" class="nav-item">Gallery</a></li>
+          <li><a href="participant.html" class="nav-item">Participants</a></li>
+          <li><a href="organizer.html" class="nav-item">Organizer</a></li>
           <li><a href="contact.html" class="nav-item">Contact</a></li>
         </ul>
       </nav>
@@ -85,12 +86,12 @@
     <section class="registration-header">
       <div class="container">
         <h1>REGISTER NOW</h1>
-        <p>Join the brutalist revolution.</p>
+        <p>Join the brutalist revolution at Hash'26 TechFest.</p>
       </div>
     </section>
 
     <section class="container">
-      <form class="registration-form" action="" novalidate>
+      <form class="registration-form" id="registrationForm" action="" novalidate>
 
         <div class="input-field-group">
           <label for="fullName">Full Name *</label>
@@ -104,8 +105,7 @@
           </div>
           <div class="input-field-group">
             <label for="phone">Phone Number *</label>
-            <input type="tel" id="phone" name="phone" class="form-input" placeholder="+91 XXXXX XXXXX"
-              pattern="[+9\1\(\)\s]+" required>
+            <input type="tel" id="phone" name="phone" class="form-input" placeholder="9876543210" required>
           </div>
         </div>
 
@@ -165,16 +165,16 @@
           <label>Events to Participate In *</label>
           <div class="selection-group">
             <label class="selection-label">
-              <input type="checkbox" name="events" value="algo-art"> Algorithmic Art
+              <input type="checkbox" name="events" value="Algorithmic Art"> Algorithmic Art
             </label>
             <label class="selection-label">
-              <input type="checkbox" name="events" value="hack-grid"> Hack The Grid
+              <input type="checkbox" name="events" value="Hack The Grid"> Hack The Grid
             </label>
             <label class="selection-label">
-              <input type="checkbox" name="events" value="ctf"> Capture The Flag
+              <input type="checkbox" name="events" value="Capture The Flag"> Capture The Flag
             </label>
             <label class="selection-label">
-              <input type="checkbox" name="events" value="design"> Design Sprint
+              <input type="checkbox" name="events" value="Design Sprint"> Design Sprint
             </label>
           </div>
         </div>
@@ -226,8 +226,9 @@
             <li><a href="events.html">Events</a></li>
             <li><a href="gallery.html">Gallery</a></li>
             <li><a href="register.html">Register</a></li>
-            <li><a href="contact.html">Contact</a></li>
             <li><a href="participant.html">Participants</a></li>
+            <li><a href="organizer.html">Organizer</a></li>
+            <li><a href="contact.html">Contact</a></li>
           </ul>
         </nav>
 
