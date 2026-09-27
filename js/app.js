@@ -824,6 +824,84 @@ function escapeHtml(str) {
 }
 
 // =====================================================
+// CONTACT FORM VALIDATION & HANDLING
+// =====================================================
+
+function setupContactForm() {
+    const form = document.getElementById("contactFeedbackForm");
+    if (!form) return;
+
+    const nameInput = document.getElementById("contact-name");
+    const emailInput = document.getElementById("contact-email");
+    const subjectInput = document.getElementById("contact-subject");
+    const messageInput = document.getElementById("contact-message");
+
+    const nameError = document.getElementById("contactNameError");
+    const emailError = document.getElementById("contactEmailError");
+    const subjectError = document.getElementById("contactSubjectError");
+    const messageError = document.getElementById("contactMessageError");
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    const clearErrors = () => {
+        [nameInput, emailInput, subjectInput, messageInput].forEach(inp => {
+            if (inp) inp.classList.remove("is-invalid");
+        });
+        if (nameError) nameError.textContent = "";
+        if (emailError) emailError.textContent = "";
+        if (subjectError) subjectError.textContent = "";
+        if (messageError) messageError.textContent = "";
+    };
+
+    form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        clearErrors();
+        let isValid = true;
+
+        if (!nameInput.value.trim()) {
+            nameInput.classList.add("is-invalid");
+            if (nameError) nameError.textContent = "Please enter your name.";
+            isValid = false;
+        }
+
+        if (!emailInput.value.trim() || !emailRegex.test(emailInput.value.trim())) {
+            emailInput.classList.add("is-invalid");
+            if (emailError) emailError.textContent = "Please enter a valid email address.";
+            isValid = false;
+        }
+
+        if (!subjectInput.value.trim()) {
+            subjectInput.classList.add("is-invalid");
+            if (subjectError) subjectError.textContent = "Please enter a subject.";
+            isValid = false;
+        }
+
+        if (!messageInput.value.trim()) {
+            messageInput.classList.add("is-invalid");
+            if (messageError) messageError.textContent = "Please write your message.";
+            isValid = false;
+        }
+
+        if (isValid) {
+            alert(`Thank you, ${nameInput.value.trim()}! Your feedback message has been sent successfully.`);
+            form.reset();
+            clearErrors();
+        }
+    });
+
+    // Clear field errors on input
+    [nameInput, emailInput, subjectInput, messageInput].forEach(inp => {
+        if (inp) {
+            inp.addEventListener("input", () => {
+                inp.classList.remove("is-invalid");
+                const errSpan = inp.parentElement.querySelector(".field-error");
+                if (errSpan) errSpan.textContent = "";
+            });
+        }
+    });
+}
+
+// =====================================================
 // PAGE LOAD INITIALIZATION
 // =====================================================
 
@@ -834,6 +912,9 @@ document.addEventListener("DOMContentLoaded", () => {
     // Initialize registration form validation & handlers
     setupFormValidation();
 
+    // Initialize contact form handler
+    setupContactForm();
+
     // Display participants list on register.html
     displayParticipantCount();
     displayParticipantList();
@@ -842,3 +923,4 @@ document.addEventListener("DOMContentLoaded", () => {
     renderParticipantTable();
     setupParticipantSearch();
 });
+
