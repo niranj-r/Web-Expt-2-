@@ -1,8 +1,9 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
+import ThemeToggle from './ThemeToggle';
 
-const Footer = () => {
-  const { setCurrentPage, isOrganizerLoggedIn } = useApp();
+const Footer = ({ onOpenMyRegistrations }) => {
+  const { setCurrentPage, isOrganizerLoggedIn, currentUser, logoutUser } = useApp();
 
   return (
     <footer className="site-footer">
@@ -15,6 +16,12 @@ const Footer = () => {
               Build. Break. Create.<br />
               Hosted by CSE department of MBCET.
             </p>
+            
+            {/* Theme Toggle in Footer as requested */}
+            <div style={{ marginTop: '1.2rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary, #aaa)' }}>Theme:</span>
+              <ThemeToggle />
+            </div>
           </div>
 
           <nav className="footer-links">
@@ -34,11 +41,55 @@ const Footer = () => {
               <li>
                 <button type="button" className="footer-link-btn" onClick={() => setCurrentPage('contact')}>Contact</button>
               </li>
+
+              {/* Login / Account button placed in Footer */}
+              <li>
+                {currentUser ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginTop: '0.3rem' }}>
+                    <button
+                      type="button"
+                      className="footer-link-btn"
+                      style={{ color: 'var(--primary, #00f0ff)', fontWeight: 'bold' }}
+                      onClick={() => setCurrentPage('auth')}
+                    >
+                      👤 Account: {currentUser.name}
+                    </button>
+                    {onOpenMyRegistrations && (
+                      <button
+                        type="button"
+                        className="footer-link-btn"
+                        style={{ fontSize: '0.85rem', color: '#00ffaa' }}
+                        onClick={onOpenMyRegistrations}
+                      >
+                        📋 My Registrations
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      className="footer-link-btn"
+                      style={{ fontSize: '0.85rem', color: '#ff4d88' }}
+                      onClick={logoutUser}
+                    >
+                      🚪 Logout
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    className="footer-link-btn"
+                    style={{ color: 'var(--primary, #00f0ff)', fontWeight: 'bold' }}
+                    onClick={() => setCurrentPage('auth')}
+                  >
+                    🔑 Login / Sign Up
+                  </button>
+                )}
+              </li>
+
               <li>
                 <button
                   type="button"
                   className="footer-link-btn"
-                  style={{ color: 'var(--highlight)', fontWeight: 'bold' }}
+                  style={{ color: 'var(--highlight, #ff0055)', fontWeight: 'bold', marginTop: '0.5rem' }}
                   onClick={() => setCurrentPage('organizer')}
                 >
                   🔒 {isOrganizerLoggedIn ? 'Organizer Dashboard' : 'Organizer Login'}

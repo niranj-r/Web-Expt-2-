@@ -1,9 +1,8 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
-import ThemeToggle from './ThemeToggle';
 
-const Navbar = ({ onOpenAuth, onOpenMyRegistrations }) => {
-  const { currentPage, setCurrentPage, visitorName, setVisitorName, currentUser, logoutUser, userRegistrations } = useApp();
+const Navbar = ({ onOpenMyRegistrations }) => {
+  const { currentPage, setCurrentPage, visitorName, setVisitorName, currentUser, userRegistrations } = useApp();
 
   const handleSetVisitorName = () => {
     const input = prompt('Please enter your name:', visitorName);
@@ -17,7 +16,8 @@ const Navbar = ({ onOpenAuth, onOpenMyRegistrations }) => {
     { id: 'events', label: 'Events' },
     { id: 'registration', label: 'Registration' },
     { id: 'gallery', label: 'Gallery' },
-    { id: 'contact', label: 'Contact' }
+    { id: 'contact', label: 'Contact' },
+    { id: 'auth', label: currentUser ? 'My Account' : 'Login / Sign Up' }
   ];
 
   return (
@@ -80,53 +80,22 @@ const Navbar = ({ onOpenAuth, onOpenMyRegistrations }) => {
               </ul>
             </nav>
 
-            {/* Auth / My Registrations Buttons */}
-            {currentUser ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <button
-                  type="button"
-                  className="btn-action"
-                  onClick={onOpenMyRegistrations}
-                  style={{
-                    padding: '0.4rem 0.8rem',
-                    fontSize: '0.85rem',
-                    backgroundColor: 'rgba(0, 240, 255, 0.1)',
-                    borderColor: 'var(--primary, #00f0ff)',
-                    color: 'var(--primary, #00f0ff)'
-                  }}
-                >
-                  My Registrations ({userRegistrations.length})
-                </button>
-                <button
-                  type="button"
-                  className="btn-action danger"
-                  onClick={logoutUser}
-                  style={{
-                    padding: '0.4rem 0.8rem',
-                    fontSize: '0.85rem',
-                    border: '1px solid #ff4d88',
-                    color: '#ff4d88',
-                    background: 'none',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Logout
-                </button>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button
-                  type="button"
-                  className="btn-action"
-                  onClick={() => onOpenAuth('login')}
-                  style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}
-                >
-                  Login / Sign Up
-                </button>
-              </div>
+            {currentUser && onOpenMyRegistrations && (
+              <button
+                type="button"
+                className="btn-action"
+                onClick={onOpenMyRegistrations}
+                style={{
+                  padding: '0.4rem 0.8rem',
+                  fontSize: '0.85rem',
+                  backgroundColor: 'rgba(0, 240, 255, 0.1)',
+                  borderColor: 'var(--primary, #00f0ff)',
+                  color: 'var(--primary, #00f0ff)'
+                }}
+              >
+                My Registrations ({userRegistrations.length})
+              </button>
             )}
-
-            <ThemeToggle />
           </div>
         </div>
       </header>

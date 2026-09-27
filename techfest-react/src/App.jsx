@@ -4,7 +4,6 @@ import { AppProvider, useApp } from './context/AppContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import EventModal from './components/EventModal';
-import AuthModal from './components/AuthModal';
 import MyRegistrationsModal from './components/MyRegistrationsModal';
 
 import HomePage from './pages/HomePage';
@@ -13,20 +12,12 @@ import RegistrationPage from './pages/RegistrationPage';
 import GalleryPage from './pages/GalleryPage';
 import ContactPage from './pages/ContactPage';
 import OrganizerPage from './pages/OrganizerPage';
+import AuthPage from './pages/AuthPage';
 
 const MainContent = () => {
   const { currentPage, setCurrentPage, toast } = useApp();
   const [selectedEventModal, setSelectedEventModal] = useState(null);
-  
-  // Auth & My Registration Modals State
-  const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [authInitialTab, setAuthInitialTab] = useState('login');
   const [myRegModalOpen, setMyRegModalOpen] = useState(false);
-
-  const handleOpenAuth = (tab = 'login') => {
-    setAuthInitialTab(tab);
-    setAuthModalOpen(true);
-  };
 
   const renderPage = () => {
     switch (currentPage) {
@@ -35,11 +26,13 @@ const MainContent = () => {
       case 'events':
         return <EventsPage onSelectEvent={evt => setSelectedEventModal(evt)} />;
       case 'registration':
-        return <RegistrationPage onOpenAuth={() => handleOpenAuth('register')} />;
+        return <RegistrationPage onOpenAuth={() => setCurrentPage('auth')} />;
       case 'gallery':
         return <GalleryPage />;
       case 'contact':
         return <ContactPage />;
+      case 'auth':
+        return <AuthPage />;
       case 'organizer':
       case 'participants':
         return <OrganizerPage />;
@@ -51,7 +44,6 @@ const MainContent = () => {
   return (
     <div className="app-root-container">
       <Navbar
-        onOpenAuth={handleOpenAuth}
         onOpenMyRegistrations={() => setMyRegModalOpen(true)}
       />
 
@@ -75,13 +67,6 @@ const MainContent = () => {
         />
       )}
 
-      {/* Auth Modal (Login / Sign Up) */}
-      <AuthModal
-        isOpen={authModalOpen}
-        onClose={() => setAuthModalOpen(false)}
-        initialTab={authInitialTab}
-      />
-
       {/* User's Event Registrations Modal */}
       <MyRegistrationsModal
         isOpen={myRegModalOpen}
@@ -95,7 +80,7 @@ const MainContent = () => {
         </div>
       )}
 
-      <Footer />
+      <Footer onOpenMyRegistrations={() => setMyRegModalOpen(true)} />
     </div>
   );
 };
