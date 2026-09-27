@@ -1,85 +1,168 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { apiService } from '../services/api';
 
 const AppContext = createContext();
-
-const INITIAL_PARTICIPANTS = [
-  {
-    id: "REG-1001",
-    fullName: "Alex Johnson",
-    email: "alex.johnson@example.com",
-    phone: "9876543210",
-    dob: "2003-05-14",
-    gender: "male",
-    college: "MBCET Trivandrum",
-    department: "cs",
-    year: "3",
-    events: ["Hack The Grid", "Algorithmic Art"],
-    message: "Excited for the hackathon!",
-    registeredAt: new Date(Date.now() - 86400000 * 2).toLocaleString()
-  },
-  {
-    id: "REG-1002",
-    fullName: "Priya Sharma",
-    email: "priya.s@example.com",
-    phone: "9812345678",
-    dob: "2004-09-21",
-    gender: "female",
-    college: "CET Trivandrum",
-    department: "it",
-    year: "2",
-    events: ["Capture The Flag", "Design Sprint"],
-    message: "Looking forward to security CTF.",
-    registeredAt: new Date(Date.now() - 86400000).toLocaleString()
-  }
-];
-
-const INITIAL_TASKS = [
-  { id: 1, text: "Verify event stage AV equipment setup", completed: true, createdAt: new Date().toLocaleDateString() },
-  { id: 2, text: "Confirm CTF server hosting credentials", completed: false, createdAt: new Date().toLocaleDateString() },
-  { id: 3, text: "Distribute participant identity badges", completed: false, createdAt: new Date().toLocaleDateString() }
-];
 
 export const AppProvider = ({ children }) => {
   const [currentPage, setCurrentPage] = useState('home');
   const [visitorName, setVisitorName] = useState(() => localStorage.getItem('hash26VisitorName') || '');
-  
+
+  // Authentication State
+  const [currentUser, setCurrentUser] = useState(() => {
+    const saved = localStorage.getItem('techfest_user');
+    return saved ? JSON.parse(saved) : null;
+  });
+  const [token, setToken] = useState(() => localStorage.getItem('techfest_token') || '');
+
   const [isOrganizerLoggedIn, setIsOrganizerLoggedIn] = useState(() => {
     return localStorage.getItem('hash26OrganizerLoggedIn') === 'true';
   });
 
-  const [participants, setParticipants] = useState(() => {
-    const saved = localStorage.getItem('hash26Participants');
-    if (saved) {
-      try { return JSON.parse(saved); } catch (e) { console.error(e); }
-    }
-    return INITIAL_PARTICIPANTS;
-  });
-
-  const [tasks, setTasks] = useState(() => {
-    const saved = localStorage.getItem('hash26Tasks');
-    if (saved) {
-      try { return JSON.parse(saved); } catch (e) { console.error(e); }
-    }
-    return INITIAL_TASKS;
-  });
+  // Data Collections (MongoDB backed)
+  const [events, setEvents] = useState([]);
+  const [participants, setParticipants] = useState([]);
+  const [userRegistrations, setUserRegistrations] = useState([]);
+  const [tasks, setTasks] = useState([]);
 
   const [toast, setToast] = useState(null);
 
+  const showToast = (message, type = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 4000);
+  };
+
+  // Fetch initial data from API
+  const fetchEvents = useCallback(async (category = '') => {
+    try {
+      const data = await apiService.getEvents(category);
+      setEvents(data);
+    } catch (err) {
+      console.warn('Backend API fetch events error, using fallback:', err.message);
+    }
+  }, []);
+
+  const fetchRegistrations = useCallback(async () => {
+    try {
+      const data = await apiService.getRegistrations();
+      setParticipants(data);
+    } catch (err) {
+      console.warn('Backend API fetch registrations error:', err.message);
+    }
+  }, []);
+
+  const fetchMyRegistrations = useCallback(async () => {
+    if (!token && !currentUser) return [];
+    try {
+      const data = await apiService.getMyRegistrations();
+      setUserRegistrations(data);
+      return data;
+    } catch (err) {
+      console.warn('Fetch my registrations error:', err.message);
+      return [];
+    }
+  }, [token, currentUser]);
+
+  const fetchTasks = useCallback(async () => {
+    try {
+      const data = await apiService.getTasks();
+      setTasks(data);
+    } catch (err) {
+      console.warn('Fetch tasks error:', err.message);
+    }
+  }, []);
+
+  // Initial load
   useEffect(() => {
-    localStorage.setItem('hash26Participants', JSON.stringify(participants));
-  }, [participants]);
+    fetchEvents();
+    fetchRegistrations();
+    fetchTasks();
+    if (token) {
+      apiService.getCurrentUser()
+        .then(user => {
+          if (user) {
+            setCurrentUser(user);
+            localStorage.setItem('techfest_user', JSON.stringify(user));
+            if (user.role === 'organizer' || user.role === 'admin') {
+              setIsOrganizerLoggedIn(true);
+              localStorage.setItem('hash26OrganizerLoggedIn', 'true');
+            }
+          }
+        })
+        .catch(() => {
+          // Token expired or invalid
+          setToken('');
+          setCurrentUser(null);
+          localStorage.removeItem('techfest_token');
+          localStorage.removeItem('techfest_user');
+        });
+    }
+  }, []);
 
   useEffect(() => {
-    localStorage.setItem('hash26Tasks', JSON.stringify(tasks));
-  }, [tasks]);
+    if (currentUser) {
+      fetchMyRegistrations();
+    }
+  }, [currentUser]);
 
   useEffect(() => {
     localStorage.setItem('hash26VisitorName', visitorName);
   }, [visitorName]);
 
-  const showToast = (message, type = 'success') => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 4000);
+  // Auth Functions
+  const registerUser = async (userData) => {
+    try {
+      const res = await apiService.register(userData);
+      const user = res.data;
+      setCurrentUser(user);
+      setToken(user.token);
+      localStorage.setItem('techfest_token', user.token);
+      localStorage.setItem('techfest_user', JSON.stringify(user));
+      setVisitorName(user.name);
+
+      if (user.role === 'organizer' || user.role === 'admin') {
+        setIsOrganizerLoggedIn(true);
+        localStorage.setItem('hash26OrganizerLoggedIn', 'true');
+      }
+
+      showToast(`Welcome, ${user.name}! Account created successfully.`);
+      return { success: true, user };
+    } catch (error) {
+      showToast(error.message, 'error');
+      return { success: false, message: error.message };
+    }
+  };
+
+  const loginUser = async (email, password) => {
+    try {
+      const res = await apiService.login({ email, password });
+      const user = res.data;
+      setCurrentUser(user);
+      setToken(user.token);
+      localStorage.setItem('techfest_token', user.token);
+      localStorage.setItem('techfest_user', JSON.stringify(user));
+      setVisitorName(user.name);
+
+      if (user.role === 'organizer' || user.role === 'admin') {
+        setIsOrganizerLoggedIn(true);
+        localStorage.setItem('hash26OrganizerLoggedIn', 'true');
+      }
+
+      showToast(`Welcome back, ${user.name}!`);
+      return { success: true, user };
+    } catch (error) {
+      showToast(error.message, 'error');
+      return { success: false, message: error.message };
+    }
+  };
+
+  const logoutUser = () => {
+    setCurrentUser(null);
+    setToken('');
+    setIsOrganizerLoggedIn(false);
+    localStorage.removeItem('techfest_token');
+    localStorage.removeItem('techfest_user');
+    localStorage.removeItem('hash26OrganizerLoggedIn');
+    showToast('Logged out successfully.');
   };
 
   const loginOrganizer = (username, password) => {
@@ -98,50 +181,88 @@ export const AppProvider = ({ children }) => {
     showToast('Organizer session ended.');
   };
 
-  const addParticipant = (data) => {
-    const newEntry = {
-      ...data,
-      id: `REG-${Math.floor(1000 + Math.random() * 9000)}`,
-      registeredAt: new Date().toLocaleString()
-    };
-    setParticipants(prev => [newEntry, ...prev]);
-    showToast(`Registration Successful! Registration ID: ${newEntry.id}`);
-    return newEntry;
+  // Participant / Event Registration CRUD
+  const addParticipant = async (data) => {
+    try {
+      const res = await apiService.createRegistration(data);
+      showToast(res.message || 'Registration Successful!');
+      fetchRegistrations();
+      fetchEvents();
+      fetchMyRegistrations();
+      return res.data;
+    } catch (error) {
+      showToast(error.message || 'Registration failed.', 'error');
+      throw error;
+    }
   };
 
-  const updateParticipant = (id, updatedData) => {
-    setParticipants(prev => prev.map(p => (String(p.id) === String(id) ? { ...p, ...updatedData } : p)));
-    showToast(`Participant ${id} updated.`);
+  const updateParticipant = async (id, updatedData) => {
+    try {
+      const resData = await apiService.updateRegistration(id, updatedData);
+      showToast(`Registration ${id} updated.`);
+      fetchRegistrations();
+      fetchMyRegistrations();
+      return resData;
+    } catch (error) {
+      showToast(error.message || 'Update failed.', 'error');
+    }
   };
 
-  const deleteParticipant = (id) => {
-    setParticipants(prev => prev.filter(p => String(p.id) !== String(id)));
-    showToast(`Participant ${id} removed.`);
+  const deleteParticipant = async (id) => {
+    try {
+      await apiService.deleteRegistration(id);
+      showToast(`Registration ${id} removed.`);
+      fetchRegistrations();
+      fetchMyRegistrations();
+    } catch (error) {
+      showToast(error.message || 'Delete failed.', 'error');
+    }
   };
 
-  const addTask = (text) => {
+  // Task CRUD
+  const addTask = async (text) => {
     if (!text.trim()) return;
-    const newTask = {
-      id: Date.now(),
-      text: text.trim(),
-      completed: false,
-      createdAt: new Date().toLocaleDateString()
-    };
-    setTasks(prev => [newTask, ...prev]);
-    showToast("Task added.");
+    try {
+      await apiService.createTask(text);
+      fetchTasks();
+      showToast('Task added.');
+    } catch (error) {
+      showToast(error.message || 'Failed to add task.', 'error');
+    }
   };
 
-  const toggleTask = (id) => {
-    setTasks(prev => prev.map(t => (t.id === id ? { ...t, completed: !t.completed } : t)));
+  const toggleTask = async (id) => {
+    try {
+      await apiService.toggleTask(id);
+      fetchTasks();
+    } catch (error) {
+      showToast(error.message || 'Failed to update task.', 'error');
+    }
   };
 
-  const deleteTask = (id) => {
-    setTasks(prev => prev.filter(t => t.id !== id));
-    showToast("Task deleted.");
+  const deleteTask = async (id) => {
+    try {
+      await apiService.deleteTask(id);
+      fetchTasks();
+      showToast('Task deleted.');
+    } catch (error) {
+      showToast(error.message || 'Failed to delete task.', 'error');
+    }
   };
 
-  const clearCompletedTasks = () => {
-    setTasks(prev => prev.filter(t => !t.completed));
+  const clearCompletedTasks = async () => {
+    try {
+      await fetch('/api/tasks/completed', {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      fetchTasks();
+      showToast('Completed tasks cleared.');
+    } catch (error) {
+      showToast('Failed to clear completed tasks.', 'error');
+    }
   };
 
   return (
@@ -151,10 +272,20 @@ export const AppProvider = ({ children }) => {
         setCurrentPage,
         visitorName,
         setVisitorName,
+        currentUser,
+        token,
+        registerUser,
+        loginUser,
+        logoutUser,
         isOrganizerLoggedIn,
         loginOrganizer,
         logoutOrganizer,
+        events,
+        fetchEvents,
         participants,
+        userRegistrations,
+        fetchRegistrations,
+        fetchMyRegistrations,
         addParticipant,
         updateParticipant,
         deleteParticipant,

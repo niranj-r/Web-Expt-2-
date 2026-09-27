@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 
 const ValidationRules = {
@@ -20,28 +20,39 @@ const ValidationRules = {
   }
 };
 
-const RegistrationPage = () => {
-  const { addParticipant, participants, setCurrentPage } = useApp();
+const RegistrationPage = ({ onOpenAuth }) => {
+  const { addParticipant, participants, setCurrentPage, currentUser } = useApp();
 
-  // Controlled component state (Requirement #5)
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
     phone: '',
-    dob: '',
-    gender: '',
+    dob: '2004-01-01',
+    gender: 'other',
     college: '',
-    department: '',
-    year: '',
-    events: [],
+    department: 'cs',
+    year: '3',
+    events: ['Hack The Grid'],
     message: '',
-    terms: false
+    terms: true
   });
 
-  // Errors state
   const [errors, setErrors] = useState({});
 
-  // Controlled change handler
+  useEffect(() => {
+    if (currentUser) {
+      setFormData(prev => ({
+        ...prev,
+        fullName: currentUser.name || prev.fullName,
+        email: currentUser.email || prev.email,
+        phone: currentUser.phone || prev.phone,
+        college: currentUser.college || prev.college,
+        department: currentUser.department || prev.department,
+        year: currentUser.year || prev.year
+      }));
+    }
+  }, [currentUser]);
+
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
 
@@ -61,7 +72,6 @@ const RegistrationPage = () => {
       }
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
-      // Clear field error on change if present
       if (errors[name]) {
         validateSingleField(name, value);
       }
@@ -102,12 +112,11 @@ const RegistrationPage = () => {
     validateSingleField(name, value);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     let newErrors = {};
 
-    // Validate Regex text fields
     Object.keys(ValidationRules).forEach(field => {
       const val = formData[field];
       if (!val || !val.trim()) {
@@ -117,7 +126,6 @@ const RegistrationPage = () => {
       }
     });
 
-    // Validate selects & dob
     if (!formData.dob) newErrors.dob = 'Please select your date of birth.';
     if (!formData.gender) newErrors.gender = 'Please select your gender.';
     if (!formData.department) newErrors.department = 'Please select a department.';
@@ -131,22 +139,20 @@ const RegistrationPage = () => {
       return;
     }
 
-    // Submit Controlled Data
-    addParticipant(formData);
+    await addParticipant(formData);
 
-    // Reset Controlled Form
     setFormData({
-      fullName: '',
-      email: '',
-      phone: '',
-      dob: '',
-      gender: '',
-      college: '',
-      department: '',
-      year: '',
+      fullName: currentUser?.name || '',
+      email: currentUser?.email || '',
+      phone: currentUser?.phone || '',
+      dob: '2004-01-01',
+      gender: 'other',
+      college: currentUser?.college || '',
+      department: currentUser?.department || 'cs',
+      year: currentUser?.year || '3',
       events: [],
       message: '',
-      terms: false
+      terms: true
     });
     setErrors({});
   };
@@ -157,11 +163,25 @@ const RegistrationPage = () => {
         <div className="container">
           <h1>REGISTER NOW</h1>
           <p>Join the brutalist revolution at Hash'26 TechFest.</p>
+
+          {!currentUser && (
+            <div style={{ marginTop: '1rem', background: 'rgba(0, 240, 255, 0.1)', border: '1px solid var(--primary, #00f0ff)', padding: '0.75rem 1rem', borderRadius: '6px', display: 'inline-block' }}>
+              <span>Already have an account? </span>
+              <button
+                type="button"
+                className="btn-link-action"
+                style={{ color: 'var(--primary, #00f0ff)', fontWeight: 'bold', fontSize: '0.95rem' }}
+                onClick={onOpenAuth}
+              >
+                Log In to autofill your details →
+              </button>
+            </div>
+          )}
         </div>
       </section>
 
       <section className="container" style={{ paddingBottom: '60px' }}>
-        <form className="registration-form" onSubmit={handleSubmit} novalidate>
+        <form className="registration-form" onSubmit={handleSubmit} noValidate>
           
           {/* Full Name */}
           <div className="input-field-group">
@@ -369,11 +389,11 @@ const RegistrationPage = () => {
           ) : (
             <div>
               {participants.slice(0, 5).map(p => (
-                <div key={p.id} className="participant-card">
+                <div key={p._id || p.registrationId || p.id} className="participant-card">
                   <div className="participant-info">
-                    <h4>{p.fullName} <small>({p.id})</small></h4>
+                    <h4>{p.fullName} <small>({p.registrationId || p.id})</small></h4>
                     <p><strong>Email:</strong> {p.email} | <strong>Phone:</strong> {p.phone}</p>
-                    <p><strong>College:</strong> {p.college} | <strong>Events:</strong> {Array.isArray(p.events) ? p.events.join(', ') : p.events}</p>
+                    <p><strong>College:</strong> {p.college} | <strong>Events:</strong> {Array.isArray(p.events) ? p.events.join(', ') : p.eventName || p.events}</p>
                   </div>
                 </div>
               ))}

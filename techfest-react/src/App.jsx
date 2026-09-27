@@ -4,6 +4,8 @@ import { AppProvider, useApp } from './context/AppContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import EventModal from './components/EventModal';
+import AuthModal from './components/AuthModal';
+import MyRegistrationsModal from './components/MyRegistrationsModal';
 
 import HomePage from './pages/HomePage';
 import EventsPage from './pages/EventsPage';
@@ -13,8 +15,18 @@ import ContactPage from './pages/ContactPage';
 import OrganizerPage from './pages/OrganizerPage';
 
 const MainContent = () => {
-  const { currentPage, toast } = useApp();
+  const { currentPage, setCurrentPage, toast } = useApp();
   const [selectedEventModal, setSelectedEventModal] = useState(null);
+  
+  // Auth & My Registration Modals State
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authInitialTab, setAuthInitialTab] = useState('login');
+  const [myRegModalOpen, setMyRegModalOpen] = useState(false);
+
+  const handleOpenAuth = (tab = 'login') => {
+    setAuthInitialTab(tab);
+    setAuthModalOpen(true);
+  };
 
   const renderPage = () => {
     switch (currentPage) {
@@ -23,7 +35,7 @@ const MainContent = () => {
       case 'events':
         return <EventsPage onSelectEvent={evt => setSelectedEventModal(evt)} />;
       case 'registration':
-        return <RegistrationPage />;
+        return <RegistrationPage onOpenAuth={() => handleOpenAuth('register')} />;
       case 'gallery':
         return <GalleryPage />;
       case 'contact':
@@ -38,7 +50,10 @@ const MainContent = () => {
 
   return (
     <div className="app-root-container">
-      <Navbar />
+      <Navbar
+        onOpenAuth={handleOpenAuth}
+        onOpenMyRegistrations={() => setMyRegModalOpen(true)}
+      />
 
       {/* Page View */}
       {renderPage()}
@@ -47,10 +62,7 @@ const MainContent = () => {
       <button
         type="button"
         className="register-button floating"
-        onClick={() => {
-          const { setCurrentPage } = useApp();
-          setCurrentPage('registration');
-        }}
+        onClick={() => setCurrentPage('registration')}
       >
         REGISTER
       </button>
@@ -62,6 +74,19 @@ const MainContent = () => {
           onClose={() => setSelectedEventModal(null)}
         />
       )}
+
+      {/* Auth Modal (Login / Sign Up) */}
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        initialTab={authInitialTab}
+      />
+
+      {/* User's Event Registrations Modal */}
+      <MyRegistrationsModal
+        isOpen={myRegModalOpen}
+        onClose={() => setMyRegModalOpen(false)}
+      />
 
       {/* Toast Notification */}
       {toast && (
